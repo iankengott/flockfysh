@@ -1,4 +1,7 @@
 # Google Image Scraper
+ORIGINAL REPOSITORY CREATOR: https://github.com/ohyicong/Google-Image-Scraper
+The code is modified to be more accessible for our use cases.
+
 A library created to scrape Google Images.<br>
 If you are looking for other image scrapers, JJLimmm has created image scrapers for Gettyimages, Shutterstock, and Bing. <br>
 Visit their repo here: https://github.com/JJLimmm/Website-Image-Scraper
