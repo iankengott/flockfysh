@@ -1,6 +1,7 @@
 import yaml
 import os
 import sys
+from model_utils import * 
 
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
@@ -25,9 +26,9 @@ def parse_params(input_yaml_file):
         if not os.path.exists(params['input_dir']):
             raise Exception(f'The input directory specified in the YAML - {params["input_dir"]} - doesn\'t exist in {os.getcwd()}')
         
-        for classnames in params['class_names']:
-            if not os.path.exists(os.path.join(params["input_dir"], classnames)):
-                raise Exception(f'Directory {os.path.join(params["input_dir"], classnames)} should exist, but do not.')
+        # for classnames in params['class_names']:
+        #     if not os.path.exists(os.path.join(params["input_dir"], classnames)):
+        #         raise Exception(f'Directory {os.path.join(params["input_dir"], classnames)} should exist, but do not.')
 
             # Uncomment at your peril ... it will force you to download 50 images per label folder
             # if len(os.listdir(os.path.join(params["input_dir"], classnames))) <= 50:
@@ -47,6 +48,8 @@ def get_input_file():
 
     return input_yaml_file
 
+def run():
+    yaml_params = parse_params(get_input_file())
+    setup_and_train_yolo(yaml_params)
 
-print(parse_params(get_input_file()))
-
+run()
