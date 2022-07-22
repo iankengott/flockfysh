@@ -1,0 +1,8 @@
+#Input.yaml should contain an input dataset folder, formatted by labels, perfect images with labels (use roboflow or something)
+# Example input directory would be: 
+# dataset/ 
+#         cat/
+#         dog/
+
+input_dir: dataset
+class_names: ['cat', 'dog']
