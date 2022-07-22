@@ -29,7 +29,7 @@ def parse_params(input_yaml_file):
             if not os.path.exists(os.path.join(params["input_dir"], classnames)):
                 raise Exception(f'Directory {os.path.join(params["input_dir"], classnames)} should exist, but do not.')
 
-            # Uncomment at your peril ... it will make you 
+            # Uncomment at your peril ... it will force you to download 50 images per label folder
             # if len(os.listdir(os.path.join(params["input_dir"], classnames))) <= 50:
             #     raise Exception(f'The catgory {classnames}, with directory {os.path.join(params["input_dir"], classnames)}, has {len(os.listdir(os.path.join(params["input_dir"], classnames)))} images. It should have >= 30 images.')
 
