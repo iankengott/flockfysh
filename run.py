@@ -50,6 +50,6 @@ def get_input_file():
 
 def run():
     yaml_params = parse_params(get_input_file())
-    setup_and_train_yolo(yaml_params)
+    setup_and_train_yolo(yaml_params, EPOCHS=5)
 
 run()
