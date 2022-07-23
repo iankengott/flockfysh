@@ -52,6 +52,6 @@ def get_input_file():
 
 def run():
     yaml_params = parse_params(get_input_file())
-    run_training_loop_object_detection_scrape(yaml_params)
+    run_training_loop_object_detection_scrape(yaml_params, EPOCHS = 1)
 
 run()
