@@ -31,7 +31,7 @@ class WebDataLoader:
 			os.makedirs(label_out_dir)
 
 		downloaded_so_far = 0
-		page = 999_999
+		page = 1
 		while page < 1_000_000:
 			cts, increment = bing.download_images(classname,
 								num_images,
@@ -50,10 +50,8 @@ class WebDataLoader:
 	def download_images_from_google(self, classname, num_workers = 8):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR))
 		print(f'Downloading images to {label_out_dir}')
+		# shouldn't go through because bing makes it
 		if not os.path.exists(label_out_dir):
-			print('Making new directory for some reason')
-			print(label_out_dir)
-			os._exit()
 			os.makedirs(label_out_dir)
 
 		args = Namespace(
