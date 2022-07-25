@@ -43,7 +43,12 @@ def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov5s6'):
     global yolo_dir
 
     os.chdir(yolo_dir)
-    os.system(f'python3 train.py --img {DIM} --batch {BATCH} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache')
+    os.chdir(yolo_dir)
+    python_call_version = 'python3'
+    if os.system(python_call_version) != 0:
+        print("Changing from python3 to python ...")
+        python_call_version = 'python'
+    os.system(f'{python_call_version} train.py --img {DIM} --batch {BATCH} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache')
     os.chdir('../')
 
 def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL ):
