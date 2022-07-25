@@ -43,7 +43,6 @@ def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov5s6'):
     global yolo_dir
 
     os.chdir(yolo_dir)
-    os.chdir(yolo_dir)
     python_call_version = 'python3'
     if os.system(python_call_version) != 0:
         print("Changing from python3 to python ...")
