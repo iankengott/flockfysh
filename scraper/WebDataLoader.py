@@ -31,15 +31,18 @@ class WebDataLoader:
 			os.makedirs(label_out_dir)
 
 		downloaded_so_far = 0
-		for page in range(100000000):
-			downloaded_so_far += bing.download_images(classname,
+		page = 1
+		while page < 1_000_000:
+			cts, increment = bing.download_images(classname,
 								num_images,
 								output_dir=label_out_dir,
 								pool_size=10,
 								file_type="png",
-								force_replace=True,
+								force_replace=False,
 								extra_query_params=f'&first={page}')
-			
+			downloaded_so_far += cts
+			page += increment
+			print(f'\nImages downloaded so far: {downloaded_so_far}\n')
 			if downloaded_so_far > num_images:
 				break
 			
@@ -71,7 +74,7 @@ class WebDataLoader:
 		for label in classnames:
 			self.download_images_from_bing(label, images_per_label)
 			cur_image_count.append(len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, label)))))
-		
+		os.exit()
 		#Then distribute the remainder into each of the classnames
 		for i in range(len(classnames)):
 			

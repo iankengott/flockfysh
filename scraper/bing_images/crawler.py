@@ -67,6 +67,8 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     image_urls = image_url_from_webpage(driver, max_number)
     driver.close()
 
+    len_urls_unfilter = len(image_urls)
+
     if max_number > len(image_urls):
         output_num = len(image_urls)
     else:
@@ -75,7 +77,7 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     print("Crawled {} image urls.".format(
         len(image_urls)))
 
-    return image_urls[0:output_num]
+    return image_urls[0:output_num], len_urls_unfilter
 
 
 if __name__ == '__main__':

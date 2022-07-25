@@ -6,6 +6,7 @@ import os
 import imghdr
 import validators
 import base64
+import uuid
 
 from PIL import Image
 
@@ -27,6 +28,10 @@ def valid_image(file_path: str) -> None:
         os.remove(file_path)
 
 
+def get_uuid() -> str:
+    return str(uuid.uuid4().hex)
+
+
 def download_image(url, path) -> bool:
     if validators.url(url):
 
@@ -34,7 +39,8 @@ def download_image(url, path) -> bool:
             r = requests.get(url, stream=True, timeout=10, verify=False)
             if r.ok:
                 ext = r.headers['Content-Type'].split("/")[-1].strip()
-                filename = path
+                filename = os.path.join(path, f'{get_uuid()}.{ext}')
+                print(filename)
                 with open(filename, 'wb') as f:
                     r.raw.decode_content = True
                     shutil.copyfileobj(r.raw, f)

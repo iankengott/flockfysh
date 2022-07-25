@@ -9,4 +9,4 @@ from scraper.bing_images import bing
 from scraper.WebDataLoader import WebDataLoader
 
 input_config_yaml = parse_params(get_input_file())
-webdl = WebDataLoader(2000, 1900, input_config_yaml['class_names'], input_config_yaml['input_dir'], 'photos')
+webdl = WebDataLoader(1000, 900, input_config_yaml['class_names'], input_config_yaml['input_dir'], 'photos')

@@ -17,7 +17,7 @@ _FINISH = False
 
 def fetch_image_urls(
     query: str,
-    limit: int = 20,
+    limit: int = 200,
     file_type: str = '',
     filters: str = '',
     extra_query_params: str =''
@@ -26,13 +26,13 @@ def fetch_image_urls(
     keywords = query
     if len(file_type) > 0:
         keywords = query + " " + file_type
-    urls = crawl_image_urls(keywords, filters, limit, extra_query_params=extra_query_params)
+    urls, len_urls_unfilter = crawl_image_urls(keywords, filters, limit, extra_query_params=extra_query_params)
     for url in urls:
         if isValidURL(url, file_type) and url not in result:
             result.append(url)
             if len(result) >= limit:
                 break
-    return result
+    return result, len_urls_unfilter
 
 
 def isValidURL(url, file_type):
@@ -57,7 +57,7 @@ def download_images(
 
     # Fetch more image URLs to avoid some images are invalid.
     max_number = math.ceil(limit*1.5)
-    urls = fetch_image_urls(query, max_number, file_type, filters, extra_query_params=extra_query_params)
+    urls, len_urls_unfilter = fetch_image_urls(query, max_number, file_type, filters, extra_query_params=extra_query_params)
     entries = get_image_entries(urls, image_dir)
 
     print("Downloading images")
@@ -66,28 +66,11 @@ def download_images(
         ps = limit
     
     cts = download_image_entries(entries, ps, limit)
-    rename_images(image_dir, query)
 
     print("Done")
     elapsed = timer() - start
     print("Elapsed time: %.2fs" % elapsed)
-    return cts
-
-def rename_images(dir, prefix):
-    files = os.listdir(dir)
-    index = 1
-    print("Renaming images")
-    for f in files:
-        if f.startswith("."):
-            print("Escape {}".format(f))
-            continue
-        src = os.path.join(dir, f)
-        name = rename(f, index, prefix)
-        dst = os.path.join(dir, name)
-        os.rename(src, dst)
-        index = index + 1
-    print("Finished renaming")
-
+    return cts, len_urls_unfilter
 
 def download_image_entries(entries, pool_size, limit):
     global _FINISH
@@ -112,8 +95,7 @@ def get_image_entries(urls, dir):
     entries = []
     i = 0
     for url in urls:
-        name = get_file_name(url, i, "#tmp#")
-        path = os.path.join(dir, name)
+        path = dir
         entries.append((url, path))
         i = i + 1
     return entries
