@@ -20,8 +20,8 @@ class WebDataLoader:
 
 		# For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
 		# uncomment below line in final vers, commented for debugging ease
-		# self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
-		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
+		self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
+		#self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
 	def download_images_from_bing(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
@@ -30,16 +30,22 @@ class WebDataLoader:
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
 
-		bing.download_images(classname,
-							num_images,
-							output_dir=label_out_dir,
-							pool_size=10,
-							file_type="png",
-							force_replace=True,
-							extra_query_params='&first=1')
+		downloaded_so_far = 0
+		for page in range(100000000):
+			downloaded_so_far += bing.download_images(classname,
+								num_images,
+								output_dir=label_out_dir,
+								pool_size=10,
+								file_type="png",
+								force_replace=True,
+								extra_query_params=f'&first={page}')
+			
+			if downloaded_so_far > num_images:
+				break
+			
 
 	def download_images_from_google(self, classname, num_workers = 8):
-		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
+		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR))
 		print(f'Downloading images to {label_out_dir}')
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)

@@ -29,17 +29,21 @@ def valid_image(file_path: str) -> None:
 
 def download_image(url, path) -> bool:
     if validators.url(url):
-        r = requests.get(url, stream=True, timeout=10, verify=False)
-        if r.ok:
-            ext = r.headers['Content-Type'].split("/")[-1].strip()
-            filename = path
-            with open(filename, 'wb') as f:
-                r.raw.decode_content = True
-                shutil.copyfileobj(r.raw, f)
-                # f.write(r.content)
-            valid_image(filename)
-        else:
-            return False
+
+        try:
+            r = requests.get(url, stream=True, timeout=10, verify=False)
+            if r.ok:
+                ext = r.headers['Content-Type'].split("/")[-1].strip()
+                filename = path
+                with open(filename, 'wb') as f:
+                    r.raw.decode_content = True
+                    shutil.copyfileobj(r.raw, f)
+                    # f.write(r.content)
+                valid_image(filename)
+            else:
+                return False
+        except Exception as e:
+            return False 
     else:
         src = url.split(";")
         ext = src[0].split("/")[-1].strip()

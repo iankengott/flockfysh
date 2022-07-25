@@ -64,14 +64,14 @@ def download_images(
     ps = pool_size
     if limit < pool_size:
         ps = limit
-    download_image_entries(entries, ps, limit)
-
+    
+    cts = download_image_entries(entries, ps, limit)
     rename_images(image_dir, query)
 
     print("Done")
     elapsed = timer() - start
     print("Elapsed time: %.2fs" % elapsed)
-
+    return cts
 
 def rename_images(dir, prefix):
     files = os.listdir(dir)
@@ -104,6 +104,8 @@ def download_image_entries(entries, pool_size, limit):
         if result:
             print("#{} {} Downloaded".format(counter, url))
             counter = counter + 1
+    
+    return counter
 
 
 def get_image_entries(urls, dir):
