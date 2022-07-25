@@ -6,6 +6,7 @@ from model_utils import *
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
 
+
 def parse_params(input_yaml_file):
     if not os.path.exists(input_yaml_file):
         raise Exception(f'The input file {input_yaml_file} cannot be found in the current directory - {os.getcwd()}')
@@ -50,6 +51,6 @@ def get_input_file():
 
 def run():
     yaml_params = parse_params(get_input_file())
-    setup_and_train_yolo(yaml_params)
+    run_training_object_detection_webscrape_loop(yaml_params, TOTAL_MAXIMUM_IMAGES=2000, MAX_TRAIN_IMAGES=1900)
 
 run()
