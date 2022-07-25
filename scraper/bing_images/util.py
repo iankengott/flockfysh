@@ -3,25 +3,53 @@ import shutil
 import posixpath
 import urllib
 import os
+import imghdr
+import validators
+import base64
+
+from PIL import Image
 
 DEFAULT_OUTPUT_DIR = "bing-images"
 
 
-def download_image(url, path) -> bool:
+def valid_image(file_path: str) -> None:
+    file_path = file_path
+    raw_name, ext = os.path.splitext(file_path)
+    img_type = imghdr.what(file_path) or "jpeg"
+    if f".{img_type}" != ext:
+        new_file_path = f"{raw_name}.{img_type}"
+        shutil.move(file_path, new_file_path)
+        file_path = new_file_path
     try:
-        r = requests.get(url, stream=True)
-        if r.status_code == 200:
-            with open(path, 'wb') as f:
+        img = Image.open(file_path).convert("RGB")
+        img.save(file_path)
+    except:
+        os.remove(file_path)
+
+
+def download_image(url, path) -> bool:
+    if validators.url(url):
+        r = requests.get(url, stream=True, timeout=10, verify=False)
+        if r.ok:
+            ext = r.headers['Content-Type'].split("/")[-1].strip()
+            filename = path
+            with open(filename, 'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
-            return True
+                # f.write(r.content)
+            valid_image(filename)
         else:
-            print("[!] Download image: {}\n[!] Err :: {}".format(
-                url, r.status_code))
             return False
-    except Exception as e:
-        print("[!] Download image: {}\n[!] Err :: {}".format(url, e))
-        return False
+    else:
+        src = url.split(";")
+        ext = src[0].split("/")[-1].strip()
+        base64_content = src[-1].split(",")[-1].strip()
+        imgdata = base64.b64decode(base64_content)
+        filename = path
+        with open(filename, 'wb') as f:
+            f.write(imgdata)
+        valid_image(filename)
+    return True
 
 
 def get_file_name(url, index, prefix='image') -> str:
