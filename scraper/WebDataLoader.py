@@ -129,8 +129,8 @@ class WebDataLoader:
 		return (img_batches, label_batches)
 
 	def get_total_ds_imgs(self):
-	   return self.current_num_images
-
+		return self.current_num_images
+	
 	def get_total_ds_imgs_added(self):
 		return self.get_total_ds_imgs() - self.starting_num_images
 
