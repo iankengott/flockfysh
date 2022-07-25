@@ -31,7 +31,7 @@ class WebDataLoader:
 			os.makedirs(label_out_dir)
 
 		downloaded_so_far = 0
-		page = 1
+		page = 999_999
 		while page < 1_000_000:
 			cts, increment = bing.download_images(classname,
 								num_images,
@@ -51,6 +51,9 @@ class WebDataLoader:
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR))
 		print(f'Downloading images to {label_out_dir}')
 		if not os.path.exists(label_out_dir):
+			print('Making new directory for some reason')
+			print(label_out_dir)
+			os._exit()
 			os.makedirs(label_out_dir)
 
 		args = Namespace(
@@ -74,8 +77,8 @@ class WebDataLoader:
 		for label in classnames:
 			self.download_images_from_bing(label, images_per_label)
 			cur_image_count.append(len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, label)))))
-		os.exit()
 		#Then distribute the remainder into each of the classnames
+
 		for i in range(len(classnames)):
 			
 			#Make up for any shortages using the google downloader
