@@ -18,8 +18,9 @@ class WebDataLoader:
 		self.current_num_images = self.starting_num_images
 		self.batch_ptr = 0
 
-		#For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
-		#self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
+		# For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
+		# uncomment below line in final vers, commented for debugging ease
+		# self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
 		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
 	def download_images_from_bing(self, classname, num_images):
@@ -103,17 +104,17 @@ class WebDataLoader:
 
 					last_image_index[i] = min(last_image_index[i] + starting_img_per_batch, total_files_per_class[i])
 
-			print('Final checks on the current batch')
-			for j in range(len(image_batch)):
-				try:
-					if j < len(image_batch):
-						img = Image.open(image_batch[j]).convert("RGB")
-						img.save(image_batch[j])
-				except Exception as e:
-					image_batch.pop(j)
-					label_batch.pop(j)
-					j -= 1
-					print(e)
+			# print('Final checks on the current batch')
+			# for j in range(len(image_batch)):
+			# 	try:
+			# 		if j < len(image_batch):
+			# 			img = Image.open(image_batch[j]).convert("RGB")
+			# 			img.save(image_batch[j])
+			# 	except Exception as e:
+			# 		image_batch.pop(j)
+			# 		label_batch.pop(j)
+			# 		j -= 1
+			# 		print(e)
 
 					
 
