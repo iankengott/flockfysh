@@ -6,7 +6,6 @@ from model_utils import *
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
 
-sys.path.insert(1, './scraper')
 
 def parse_params(input_yaml_file):
     if not os.path.exists(input_yaml_file):
@@ -52,6 +51,6 @@ def get_input_file():
 
 def run():
     yaml_params = parse_params(get_input_file())
-    run_training_loop_object_detection_scrape(yaml_params, EPOCHS = 1)
+    run_training_object_detection_webscrape_loop(yaml_params, TOTAL_MAXIMUM_IMAGES=2000, MAX_TRAIN_IMAGES=1900)
 
 run()
