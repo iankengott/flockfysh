@@ -21,7 +21,7 @@ def gen_query_url(keywords, filters, extra_query_params=''):
 def image_url_from_webpage(driver, max_number=10000):
     image_urls = list()
 
-    time.sleep(10)
+    time.sleep(1)
     img_count = 0
 
     while True:
@@ -38,7 +38,7 @@ def image_url_from_webpage(driver, max_number=10000):
                 smb[0].click()
             else:
                 break
-        time.sleep(3)
+        time.sleep(1)
     for image_element in image_elements:
         m_json_str = image_element.get_attribute("m")
         m_json = json.loads(m_json_str)
