@@ -30,21 +30,13 @@ class WebDataLoader:
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
 
-		downloaded_so_far = 0
-		page = 1
-		while page < 1_000_000:
-			cts, increment = bing.download_images(classname,
-								num_images,
-								output_dir=label_out_dir,
-								pool_size=100,
-								file_type="png",
-								force_replace=False,
-								extra_query_params=f'&first={page}')
-			downloaded_so_far += cts
-			page += increment
-			print(f'\nImages downloaded so far: {downloaded_so_far}\n')
-			if downloaded_so_far > num_images:
-				break
+		bing.download_images(classname,
+							num_images,
+							output_dir=label_out_dir,
+							pool_size=10,
+							file_type="png",
+							force_replace=True,
+							extra_query_params='&first=1')
 			
 
 	def download_images_from_google(self, classname, num_workers = 8):
