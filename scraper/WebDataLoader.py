@@ -2,6 +2,7 @@ import os
 from argparse import Namespace
 from cygnusx1.bot import main as scrape_google_images
 from bing_images import bing
+from yahoo_images import yahoo
 import numpy as np
 import cv2
 from PIL import Image
@@ -34,9 +35,25 @@ class WebDataLoader:
 							num_images,
 							output_dir=label_out_dir,
 							pool_size=10,
-							file_type="png",
+							file_type="",
 							force_replace=True,
 							extra_query_params='&first=1')
+
+
+	def download_images_from_yahoo(self, classname, num_images):
+		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
+		print(f'Downloading images to {label_out_dir}')
+
+		if not os.path.exists(label_out_dir):
+			os.makedirs(label_out_dir)
+
+		yahoo.download_images(classname,
+							num_images,
+							output_dir=label_out_dir,
+							pool_size=10,
+							file_type="",
+							force_replace=False,
+							extra_query_params='')
 			
 
 	def download_images_from_google(self, classname, num_workers = 8):
@@ -56,17 +73,25 @@ class WebDataLoader:
 
 		scrape_google_images(args)
 
+
 	def download_by_chunk(self, classnames, MAX_IMAGES, ignore_excess = False):
 
 		images_per_label = MAX_IMAGES // len(classnames)
 		print(f'Downloading {images_per_label} images for each category first')
 
-		cur_image_count = []
+		cur_image_count = [0] * len(classnames)
 
 		#Evenly split all the images first using the Bing Downloader
-		for label in classnames:
-			self.download_images_from_bing(label, images_per_label)
-			cur_image_count.append(len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, label)))))
+		for i in range(len(classnames)):
+			if cur_image_count[i] < images_per_label:
+				self.download_images_from_bing(classnames[i], images_per_label)
+				cur_image_count[i] += len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+
+		#Then distribute the remainder into each of the classnames
+		for i in range(len(classnames)):
+			if cur_image_count[i] < images_per_label:
+				self.download_images_from_yahoo(classnames[i], images_per_label)
+				cur_image_count[i] += len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
 		#Then distribute the remainder into each of the classnames
 
 		for i in range(len(classnames)):
