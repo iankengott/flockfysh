@@ -2,6 +2,7 @@ import os
 from argparse import Namespace
 from cygnusx1.bot import main as scrape_google_images
 from bing_images import bing
+from yahoo_images import yahoo
 import numpy as np
 import cv2
 from PIL import Image
@@ -30,11 +31,11 @@ class WebDataLoader:
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
 
-		bing.download_images(classname,
+		yahoo.download_images(classname,
 							num_images,
 							output_dir=label_out_dir,
 							pool_size=10,
-							file_type="png",
+							file_type="",
 							force_replace=True,
 							extra_query_params='&first=1')
 			
