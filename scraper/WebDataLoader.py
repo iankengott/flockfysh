@@ -36,7 +36,7 @@ class WebDataLoader:
 			cts, increment = bing.download_images(classname,
 								num_images,
 								output_dir=label_out_dir,
-								pool_size=10,
+								pool_size=100,
 								file_type="png",
 								force_replace=False,
 								extra_query_params=f'&first={page}')
