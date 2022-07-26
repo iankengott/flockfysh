@@ -85,7 +85,6 @@ def file_data(name):
 
 
 def make_image_dir(output_dir, force_replace=False) -> str:
-    force_replace = False
     image_dir = output_dir
     if len(output_dir) < 1:
         image_dir = os.path.join(os.getcwd(), DEFAULT_OUTPUT_DIR)
