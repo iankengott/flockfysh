@@ -33,33 +33,21 @@ def get_uuid() -> str:
 
 
 def download_image(url, path) -> bool:
-    if validators.url(url):
-
-        try:
-            r = requests.get(url, stream=True, timeout=10, verify=False)
-            if r.ok:
-                ext = r.headers['Content-Type'].split("/")[-1].strip()
-                filename = os.path.join(path, f'{get_uuid()}.{ext}')
-                print(filename)
-                with open(filename, 'wb') as f:
-                    r.raw.decode_content = True
-                    shutil.copyfileobj(r.raw, f)
-                    # f.write(r.content)
-                valid_image(filename)
-            else:
-                return False
-        except Exception as e:
-            return False 
-    else:
-        src = url.split(";")
-        ext = src[0].split("/")[-1].strip()
-        base64_content = src[-1].split(",")[-1].strip()
-        imgdata = base64.b64decode(base64_content)
-        filename = path
-        with open(filename, 'wb') as f:
-            f.write(imgdata)
-        valid_image(filename)
-    return True
+    try:
+        r = requests.get(url, stream=True, timeout=10, verify=False)
+        if r.ok:
+            ext = r.headers['Content-Type'].split("/")[-1].strip()
+            filename = os.path.join(path, f'{get_uuid()}.{ext}')
+            print(filename)
+            with open(filename, 'wb') as f:
+                r.raw.decode_content = True
+                shutil.copyfileobj(r.raw, f)
+                # f.write(r.content)
+            valid_image(filename)
+        else:
+            return False
+    except Exception as e:
+        return False 
 
 
 def get_file_name(url, index, prefix='image') -> str:
