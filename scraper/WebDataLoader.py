@@ -3,6 +3,7 @@ from argparse import Namespace
 from cygnusx1.bot import main as scrape_google_images
 from bing_images import bing
 from yahoo_images import yahoo
+from shutterstock_images import shutterstock
 import numpy as np
 import cv2
 from PIL import Image
@@ -24,6 +25,23 @@ class WebDataLoader:
 		self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
 		#self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
+	
+	def download_images_from_yahoo(self, classname, num_images):
+		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
+		print(f'Downloading images to {label_out_dir}')
+
+		if not os.path.exists(label_out_dir):
+			os.makedirs(label_out_dir)
+
+		shutterstock.download_images(classname,
+							num_images,
+							output_dir=label_out_dir,
+							pool_size=10,
+							file_type="",
+							force_replace=False,
+							extra_query_params='')
+
+	
 	def download_images_from_bing(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
 		print(f'Downloading images to {label_out_dir}')
