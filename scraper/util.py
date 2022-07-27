@@ -10,7 +10,7 @@ import uuid
 
 from PIL import Image
 
-DEFAULT_OUTPUT_DIR = "bing-images"
+DEFAULT_OUTPUT_DIR = "images"
 
 
 def valid_image(file_path: str) -> None:
