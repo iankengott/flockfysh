@@ -22,8 +22,13 @@ def valid_image(file_path: str) -> None:
         shutil.move(file_path, new_file_path)
         file_path = new_file_path
     try:
-        img = Image.open(file_path).convert("RGB")
-        img.save(file_path)
+        img = Image.open(file_path)
+        width, height = img.size
+        if width == 0 or height == 0:
+            os.remove(file_path)
+        else:
+            img = img.convert("RGB")
+            img.save(file_path)
     except:
         os.remove(file_path)
 
