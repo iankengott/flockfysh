@@ -59,7 +59,7 @@ def download_images(
     print("Save path: {}".format(image_dir))
 
     # Fetch more image URLs to avoid some images are invalid.
-    max_number = math.ceil(limit*1.5)
+    max_number = math.ceil(limit)
     urls, len_urls_unfilter = fetch_image_urls(query, max_number, file_type, filters, extra_query_params=extra_query_params)
     entries = get_image_entries(urls, image_dir)
 
