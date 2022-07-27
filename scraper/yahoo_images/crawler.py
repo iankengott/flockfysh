@@ -16,7 +16,7 @@ def gen_query_url(keywords, filters, extra_query_params=''):
 
 
 def image_url_from_webpage(driver, max_number=10000):
-    image_urls = list()
+    image_urls = set()
 
     time.sleep(5)
     img_count = 0
@@ -39,8 +39,8 @@ def image_url_from_webpage(driver, max_number=10000):
     for image_element in image_elements:
         img = image_element.find_element_by_tag_name('img')
         src = img.get_attribute('src')
-        image_urls.append(src)
-    return image_urls
+        image_urls.add(src)
+    return list(image_urls)
 
 
 def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type="http", extra_query_params=''):
