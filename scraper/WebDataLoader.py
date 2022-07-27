@@ -42,20 +42,20 @@ class WebDataLoader:
 							extra_query_params='')
 
 	
-	def download_images_from_bing(self, classname, num_images):
-		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
-		print(f'Downloading images to {label_out_dir}')
+	# def download_images_from_bing(self, classname, num_images):
+	# 	label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
+	# 	print(f'Downloading images to {label_out_dir}')
 
-		if not os.path.exists(label_out_dir):
-			os.makedirs(label_out_dir)
+	# 	if not os.path.exists(label_out_dir):
+	# 		os.makedirs(label_out_dir)
 
-		bing.download_images(classname,
-							num_images,
-							output_dir=label_out_dir,
-							pool_size=10,
-							file_type="",
-							force_replace=True,
-							extra_query_params='&first=1')
+	# 	bing.download_images(classname,
+	# 						num_images,
+	# 						output_dir=label_out_dir,
+	# 						pool_size=10,
+	# 						file_type="",
+	# 						force_replace=True,
+	# 						extra_query_params='&first=1')
 
 
 	def download_images_from_yahoo(self, classname, num_images):
