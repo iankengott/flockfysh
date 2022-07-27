@@ -21,7 +21,7 @@ def gen_query_url(keywords, filters, extra_query_params=''):
 
 
 def image_url_from_webpage(driver, max_number=10000):
-    image_urls = list()
+    image_urls = set()
 
     time.sleep(5)
     img_count = 0
@@ -54,8 +54,8 @@ def image_url_from_webpage(driver, max_number=10000):
     for image_element in image_elements:
         m_json_str = image_element.get_attribute("m")
         m_json = json.loads(m_json_str)
-        image_urls.append(m_json["murl"])
-    return image_urls
+        image_urls.add(m_json["murl"])
+    return list(image_urls)
 
 
 def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type="http", extra_query_params=''):
