@@ -1,8 +1,4 @@
 try:
-    from util import get_file_name, rename, make_image_dir, download_image
-except ImportError:  # Python 3
-    from .util import get_file_name, rename, make_image_dir, download_image
-try:
     from crawler import crawl_image_urls
 except ImportError:  # Python 3
     from .crawler import crawl_image_urls
@@ -11,6 +7,13 @@ from multiprocessing.pool import ThreadPool
 from time import time as timer
 import os
 import math
+
+import sys
+sys.path.append('../scraper')
+try:
+    from scraper.util import get_file_name, rename, make_image_dir, download_image
+except ImportError:  # Python 3
+    from scraper.util import get_file_name, rename, make_image_dir, download_image
 
 _FINISH = False
 
