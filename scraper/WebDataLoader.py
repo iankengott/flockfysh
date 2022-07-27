@@ -26,7 +26,7 @@ class WebDataLoader:
 		#self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
 	
-	def download_images_from_yahoo(self, classname, num_images):
+	def download_images_from_shutterstock(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
 		print(f'Downloading images to {label_out_dir}')
 
@@ -99,28 +99,32 @@ class WebDataLoader:
 
 		cur_image_count = [0] * len(classnames)
 
-		#Evenly split all the images first using the Bing Downloader
+		# Shutterstock
 		for i in range(len(classnames)):
 			if cur_image_count[i] < images_per_label:
-				self.download_images_from_bing(classnames[i], images_per_label)
+				self.download_images_from_shutterstock(classnames[i], images_per_label)
 				cur_image_count[i] += len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
 
-		#Then distribute the remainder into each of the classnames
+		# # Bing
+		# for i in range(len(classnames)):
+		# 	if cur_image_count[i] < images_per_label:
+		# 		self.download_images_from_bing(classnames[i], images_per_label)
+		# 		cur_image_count[i] += len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+
+		# Yahoo
 		for i in range(len(classnames)):
 			if cur_image_count[i] < images_per_label:
 				self.download_images_from_yahoo(classnames[i], images_per_label)
 				cur_image_count[i] += len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
-		#Then distribute the remainder into each of the classnames
-
+		
+		# Google
 		for i in range(len(classnames)):
-			
-			#Make up for any shortages using the google downloader
 			if cur_image_count[i] < images_per_label:
 				self.download_images_from_google(classnames[i], num_workers = 8)
 
-				if not ignore_excess:
-					print('Excess has been specified to be removed, set ignore_excess to be True if the extra images is wanted')
-					[os.remove(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i], f))) for f in os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i])))[images_per_label:] ]
+		if not ignore_excess:
+			print('Excess has been specified to be removed, set ignore_excess to be True if the extra images is wanted')
+			[os.remove(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i], f))) for f in os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i])))[images_per_label:] ]
 
 	def batch_images(self, classnames, starting_img_per_batch = 50):
 		img_batches = []
