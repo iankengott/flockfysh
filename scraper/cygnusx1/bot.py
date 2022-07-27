@@ -27,7 +27,7 @@ def main(args) -> bool:
         for kw in scrap_bar:
             scrap_bar.set_description(f"Keywords Scraping '{kw}'")
             img_srcs, num_search_results = scrap_google_images(args, kw)
-            save_dir = os.path.join(args.out_dir, kw.strip().replace(" ", "_"))
+            save_dir = os.path.join(args.out_dir, kw.strip())
             maps.append([img_srcs, save_dir, kw])
             stats[kw] = {"num_search": num_search_results, "num_scraping": len(img_srcs), "links": img_srcs}
             write_json(cached_file, stats)

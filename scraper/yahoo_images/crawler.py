@@ -6,26 +6,23 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 import json
 
-BASE_URL = "https://www.bing.com/images/search?"
+BASE_URL = "https://images.search.yahoo.com/search/images;_ylt=Awr488YjaOBiVSwDNS2LuLkF;_ylc=X1MDOTYwNTc0ODMEX3IDMgRmcgMEZ3ByaWQDMDNHaEZ3c0VRUEMxZkxyYU9HdjlOQQRuX3N1Z2cDMTAEb3JpZ2luA2ltYWdlcy5zZWFyY2gueWFob28uY29tBHBvcwMwBHBxc3RyAwRwcXN0cmwDBHFzdHJsAzQEcXVlcnkDY29kZQR0X3N0bXADMTY1ODg3Mzg5Mw--?fr2=sb-top-images.search"
 
 
 def gen_query_url(keywords, filters, extra_query_params=''):
-    keywords_str = "&q=" + quote(keywords)
+    keywords_str = "&p=" + quote(keywords)
     query_url = BASE_URL + keywords_str
-    if len(filters) > 0:
-        query_url += "&qft="+filters
-    query_url += extra_query_params
     return query_url
 
 
 def image_url_from_webpage(driver, max_number=10000):
     image_urls = list()
 
-    time.sleep(1)
+    time.sleep(5)
     img_count = 0
 
     while True:
-        image_elements = driver.find_elements_by_class_name("iusc")
+        image_elements = driver.find_elements_by_class_name("img")
         if len(image_elements) > max_number:
             break
         if len(image_elements) > img_count:
@@ -33,16 +30,16 @@ def image_url_from_webpage(driver, max_number=10000):
             driver.execute_script(
                 "window.scrollTo(0, document.body.scrollHeight);")
         else:
-            smb = driver.find_elements_by_class_name("btn_seemore")
+            smb = driver.find_elements_by_class_name("more-res")
             if len(smb) > 0 and smb[0].is_displayed():
                 smb[0].click()
             else:
                 break
-        time.sleep(1)
+        time.sleep(3)
     for image_element in image_elements:
-        m_json_str = image_element.get_attribute("m")
-        m_json = json.loads(m_json_str)
-        image_urls.append(m_json["murl"])
+        img = image_element.find_element_by_tag_name('img')
+        src = img.get_attribute('src')
+        image_urls.append(src)
     return image_urls
 
 
@@ -52,7 +49,7 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     
     #Modified from original to make headless
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.headless = False 
+    chrome_options.headless = True 
 
     if proxy is not None and proxy_type is not None:
         chrome_options.add_argument(

@@ -53,4 +53,5 @@ def run():
     yaml_params = parse_params(get_input_file())
     run_training_object_detection_webscrape_loop(yaml_params, TOTAL_MAXIMUM_IMAGES=2000, MAX_TRAIN_IMAGES=1900)
 
-run()
+if __name__ == '__main__':
+    run()

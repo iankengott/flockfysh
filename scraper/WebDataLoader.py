@@ -2,6 +2,7 @@ import os
 from argparse import Namespace
 from cygnusx1.bot import main as scrape_google_images
 from bing_images import bing
+from yahoo_images import yahoo
 import numpy as np
 import cv2
 from PIL import Image
@@ -18,9 +19,10 @@ class WebDataLoader:
 		self.current_num_images = self.starting_num_images
 		self.batch_ptr = 0
 
-		#For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
+		# For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
+		# uncomment below line in final vers, commented for debugging ease
 		self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
-		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
+		#self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
 	def download_images_from_bing(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
@@ -33,13 +35,31 @@ class WebDataLoader:
 							num_images,
 							output_dir=label_out_dir,
 							pool_size=10,
-							file_type="png",
+							file_type="",
 							force_replace=True,
 							extra_query_params='&first=1')
 
-	def download_images_from_google(self, classname, num_workers = 8):
+
+	def download_images_from_yahoo(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
 		print(f'Downloading images to {label_out_dir}')
+
+		if not os.path.exists(label_out_dir):
+			os.makedirs(label_out_dir)
+
+		yahoo.download_images(classname,
+							num_images,
+							output_dir=label_out_dir,
+							pool_size=10,
+							file_type="",
+							force_replace=False,
+							extra_query_params='')
+			
+
+	def download_images_from_google(self, classname, num_workers = 8):
+		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR))
+		print(f'Downloading images to {label_out_dir}')
+		# shouldn't go through because bing makes it
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
 
@@ -53,19 +73,27 @@ class WebDataLoader:
 
 		scrape_google_images(args)
 
+
 	def download_by_chunk(self, classnames, MAX_IMAGES, ignore_excess = False):
 
 		images_per_label = MAX_IMAGES // len(classnames)
 		print(f'Downloading {images_per_label} images for each category first')
 
-		cur_image_count = []
+		cur_image_count = [0] * len(classnames)
 
 		#Evenly split all the images first using the Bing Downloader
-		for label in classnames:
-			self.download_images_from_bing(label, images_per_label)
-			cur_image_count.append(len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, label)))))
-		
+		for i in range(len(classnames)):
+			if cur_image_count[i] < images_per_label:
+				self.download_images_from_bing(classnames[i], images_per_label)
+				cur_image_count[i] += len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+
 		#Then distribute the remainder into each of the classnames
+		for i in range(len(classnames)):
+			if cur_image_count[i] < images_per_label:
+				self.download_images_from_yahoo(classnames[i], images_per_label)
+				cur_image_count[i] += len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+		#Then distribute the remainder into each of the classnames
+
 		for i in range(len(classnames)):
 			
 			#Make up for any shortages using the google downloader
@@ -103,18 +131,6 @@ class WebDataLoader:
 
 					last_image_index[i] = min(last_image_index[i] + starting_img_per_batch, total_files_per_class[i])
 
-			print('Final checks on the current batch')
-			for j in range(len(image_batch)):
-				if j < len(image_batch):
-					try:
-						img = Image.open(image_batch[j]).convert("RGB")
-						img.save(image_batch[j])
-					except Exception as e:
-						image_batch.pop(j)
-						label_batch.pop(j)
-						j -= 1
-						print(e)
-
 					
 
 			img_batches.append(image_batch)
@@ -129,8 +145,8 @@ class WebDataLoader:
 		return (img_batches, label_batches)
 
 	def get_total_ds_imgs(self):
-	   return self.current_num_images
-
+		return self.current_num_images
+	
 	def get_total_ds_imgs_added(self):
 		return self.get_total_ds_imgs() - self.starting_num_images
 

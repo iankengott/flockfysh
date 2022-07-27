@@ -11,6 +11,8 @@ import shutil
 import logging
 import random as rand
 
+from PIL import Image
+
 logging.getLogger("WDM").setLevel(logging.ERROR)
 
 def init_logger(log_file=None, log_file_level=logging.NOTSET):
@@ -46,11 +48,18 @@ def get_uuid() -> str:
     return str(uuid.uuid4().hex)
 
 def valid_image(file_path: str) -> None:
+    file_path = file_path
     raw_name, ext = os.path.splitext(file_path)
     img_type = imghdr.what(file_path) or "jpeg"
     if f".{img_type}" != ext:
         new_file_path = f"{raw_name}.{img_type}"
         shutil.move(file_path, new_file_path)
+        file_path = new_file_path
+    try:
+        img = Image.open(file_path).convert("RGB")
+        img.save(file_path)
+    except:
+        os.remove(file_path)
 
 def write_json(file_path: str, data: dict):
     with open(file_path, 'w') as fw:
