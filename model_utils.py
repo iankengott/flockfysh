@@ -43,7 +43,7 @@ def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov7', WORKERS = 
     global yolo_dir
 
     os.chdir(yolo_dir)
-    os.system(f'python3 train.py --workers {WORKERS} --device 0 --epochs {EPOCHS} --batch-size {BATCH} --data {os.path.abspath(os.path.join("raw_dataset", "data.yaml"))} --img {DIM} {DIM} --cfg cfg/training/yolov7.yaml --weights "" --name {MODEL} --hyp data/hyp.scratch.p5.yaml')
+    os.system(f'python train.py --workers {WORKERS} --device 0 --epochs {EPOCHS} --batch-size {BATCH} --data {os.path.abspath(os.path.join("raw_dataset", "data.yaml"))} --img {DIM} {DIM} --cfg cfg/training/yolov7.yaml --weights "" --name {MODEL} --hyp data/hyp.scratch.p5.yaml')
 #    os.system(f'python3 train.py --img {DIM} --batch {BATCH} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache')
     os.chdir('../')
 
