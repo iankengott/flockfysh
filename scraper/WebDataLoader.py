@@ -1,7 +1,7 @@
 import os
 from argparse import Namespace
 from cygnusx1.bot import main as scrape_google_images
-from bing_images import bing
+# from bing_images import bing
 from yahoo_images import yahoo
 from shutterstock_images import shutterstock
 import numpy as np
@@ -42,20 +42,20 @@ class WebDataLoader:
 							extra_query_params='')
 
 	
-	def download_images_from_bing(self, classname, num_images):
-		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
-		print(f'Downloading images to {label_out_dir}')
+	# def download_images_from_bing(self, classname, num_images):
+	# 	label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
+	# 	print(f'Downloading images to {label_out_dir}')
 
-		if not os.path.exists(label_out_dir):
-			os.makedirs(label_out_dir)
+	# 	if not os.path.exists(label_out_dir):
+	# 		os.makedirs(label_out_dir)
 
-		bing.download_images(classname,
-							num_images,
-							output_dir=label_out_dir,
-							pool_size=10,
-							file_type="",
-							force_replace=True,
-							extra_query_params='&first=1')
+	# 	bing.download_images(classname,
+	# 						num_images,
+	# 						output_dir=label_out_dir,
+	# 						pool_size=10,
+	# 						file_type="",
+	# 						force_replace=True,
+	# 						extra_query_params='&first=1')
 
 
 	def download_images_from_yahoo(self, classname, num_images):
@@ -97,13 +97,11 @@ class WebDataLoader:
 		images_per_label = MAX_IMAGES // len(classnames)
 		print(f'Downloading {images_per_label} images for each category first')
 
-		cur_image_count = [0] * len(classnames)
+		# shutterstock, yahoo, google (bing not used)
+		num_scrapers = 3 
 
-		# Shutterstock
-		for i in range(len(classnames)):
-			if cur_image_count[i] < images_per_label:
-				self.download_images_from_shutterstock(classnames[i], images_per_label)
-				cur_image_count[i] += len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+		cur_image_count = [0] * len(classnames)
+		images_per_scraper = images_per_label // num_scrapers + 1
 
 		# # Bing
 		# for i in range(len(classnames)):
@@ -114,13 +112,20 @@ class WebDataLoader:
 		# Yahoo
 		for i in range(len(classnames)):
 			if cur_image_count[i] < images_per_label:
-				self.download_images_from_yahoo(classnames[i], images_per_label)
-				cur_image_count[i] += len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+				self.download_images_from_yahoo(classnames[i], images_per_scraper)
+				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
 		
 		# Google
 		for i in range(len(classnames)):
 			if cur_image_count[i] < images_per_label:
 				self.download_images_from_google(classnames[i], num_workers = 8)
+				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+
+		# Shutterstock
+		for i in range(len(classnames)):
+			if cur_image_count[i] < images_per_label:
+				self.download_images_from_shutterstock(classnames[i], images_per_label - cur_image_count[i])
+				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
 
 		if not ignore_excess:
 			print('Excess has been specified to be removed, set ignore_excess to be True if the extra images is wanted')
