@@ -19,7 +19,7 @@ class WebDataLoader:
 		self.batch_ptr = 0
 
 		#For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
-		#self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
+		self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
 		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
 	def download_images_from_bing(self, classname, num_images):
@@ -105,15 +105,15 @@ class WebDataLoader:
 
 			print('Final checks on the current batch')
 			for j in range(len(image_batch)):
-				try:
-					if j < len(image_batch):
+				if j < len(image_batch):
+					try:
 						img = Image.open(image_batch[j]).convert("RGB")
 						img.save(image_batch[j])
-				except Exception as e:
-					image_batch.pop(j)
-					label_batch.pop(j)
-					j -= 1
-					print(e)
+					except Exception as e:
+						image_batch.pop(j)
+						label_batch.pop(j)
+						j -= 1
+						print(e)
 
 					
 
@@ -155,3 +155,14 @@ class WebDataLoader:
 	
 	def reset_batch(self):
 		self.batch_ptr = 0
+
+class AnnotationDataLoader:
+	def __init__(self, labels, dataset_dir):
+		self.labels = labels
+		self.starting_num_images = len(os.listdir(os.path.join(dataset_dir, 'train' , 'images'))) + len(os.listdir(os.path.join(dataset_dir, 'valid' , 'images')))
+		self.current_num_images = self.starting_num_images
+		self.batch_ptr = 0
+
+		#For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
+		self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
+		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
