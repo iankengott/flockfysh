@@ -1,6 +1,5 @@
 import os
 from argparse import Namespace
-from cygnusx1.bot import main as scrape_google_images
 # from bing_images import bing
 from yahoo_images import yahoo
 from shutterstock_images import shutterstock

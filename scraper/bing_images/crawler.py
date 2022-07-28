@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore')
+
 from urllib.parse import quote
 import shutil
 from selenium import webdriver

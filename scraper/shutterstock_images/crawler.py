@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore')
+
 from urllib.parse import quote
 import shutil
 from selenium import webdriver
@@ -29,7 +32,6 @@ def image_url_from_webpage(driver, max_number=10000):
     for j in range(0, len(img_container)):
         img_src = img_container[j].get("src")
         image_urls.add(img_src)
-    print(image_urls)
     return list(image_urls)
         
 
@@ -53,7 +55,8 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     image_urls = list()
     i = 1
     while len(image_urls) < max_number:
-        print(len(image_urls), max_number)
+        remaining = max_number - len(image_urls)
+        print(f'{remaining} images left to scrape.')
         query_url = gen_query_url(keywords, filters, extra_query_params=extra_query_params, page=i)
         driver.get(query_url)
         image_urls.extend(image_url_from_webpage(driver, max_number))

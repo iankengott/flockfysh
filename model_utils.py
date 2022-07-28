@@ -152,7 +152,7 @@ def get_exp_dir(exp_upper_dir):
             if pot_num > cur_num:
                 cur_num = pot_num
     
-    return f'exp{cur_num}' if cur_num is not 1 else 'exp'
+    return f'exp{cur_num}' if cur_num != 1 else 'exp'
             
 
 def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 7000, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 16, EPOCHS = 50, MAX_TRAINS = 3):

@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore')
+
 from lib2to3.pgen2 import driver
 from urllib.parse import quote
 import shutil
