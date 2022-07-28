@@ -12,7 +12,6 @@ plan.txt
 out.txt
 TODO.txt
 
-scraper/bing_images
 scraper/__pycache__/GoogleImageScraper.cpython-37.pyc
 scraper/ghostdriver.log
 scraper/webdriver/phantomjs.exe
