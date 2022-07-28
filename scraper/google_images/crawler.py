@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore')
+
 from lib2to3.pgen2 import driver
 from urllib.parse import quote
 import shutil
@@ -57,6 +60,7 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     #Modified from original to make headless
     chrome_options = webdriver.ChromeOptions()
     chrome_options.headless = True 
+    chrome_options.add_argument('log-level=3')
 
     if proxy is not None and proxy_type is not None:
         chrome_options.add_argument(
@@ -64,7 +68,7 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     
     #Update to handle webdriver
     driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), chrome_options=chrome_options)
-
+    print('\n\n')
     query_url = gen_query_url(keywords, filters, extra_query_params=extra_query_params)
     driver.get(query_url)
     image_urls = image_url_from_webpage(driver, max_number)

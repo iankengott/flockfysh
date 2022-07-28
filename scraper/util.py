@@ -43,7 +43,6 @@ def download_image(url, path) -> bool:
         if r.ok:
             ext = r.headers['Content-Type'].split("/")[-1].strip()
             filename = os.path.join(path, f'{get_uuid()}.{ext}')
-            print(filename)
             with open(filename, 'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)

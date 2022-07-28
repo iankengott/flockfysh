@@ -28,7 +28,7 @@ class WebDataLoader:
 	
 	def download_images_from_shutterstock(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
-		print(f'Downloading images to {label_out_dir}')
+		print(f'Shutterstock scraper is downloading images to {label_out_dir}')
 
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
@@ -60,7 +60,7 @@ class WebDataLoader:
 
 	def download_images_from_yahoo(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
-		print(f'Downloading images to {label_out_dir}')
+		print(f'Yahoo scraper is downloading images to {label_out_dir}')
 
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
@@ -76,7 +76,7 @@ class WebDataLoader:
 
 	def download_images_from_google(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
-		print(f'Downloading images to {label_out_dir}')
+		print(f'Google scraper is downloading images to {label_out_dir}')
 
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
@@ -93,7 +93,7 @@ class WebDataLoader:
 	def download_by_chunk(self, classnames, MAX_IMAGES, ignore_excess = False):
 
 		images_per_label = MAX_IMAGES // len(classnames)
-		print(f'Downloading {images_per_label} images for each category first')
+		print(f'Downloading {images_per_label} images for each category.')
 
 		# shutterstock, yahoo, google (bing not used)
 		num_scrapers = 3 
