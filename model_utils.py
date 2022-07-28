@@ -15,14 +15,14 @@ import gc
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scraper'))
 
-from scraper.WebDataLoader import WebDataLoader
+from scraper.WebDataLoader import AnnotationDataLoader, WebDataLoader
 
 
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
 
 
-yolo_url = 'https://github.com/WongKinYiu/yolov7'  # 'https://github.com/ultralytics/yolov5' #Uncomment to use yolov7 
+yolo_url = 'https://github.com/ultralytics/yolov5'  # '' #Uncomment to use yolov7 
 yolo_dir = yolo_url.split('/')[-1]
 PHOTO_DIRNAME = 'photos'
 PHOTO_DIRECTORY = os.path.join('scraper', PHOTO_DIRNAME)
@@ -39,15 +39,15 @@ def setup_raw_dataset(yolo_dir, input_config_yaml):
 
     return os.path.join(yolo_dir, 'raw_dataset', 'data.yaml')
     
-def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov7', WORKERS = 8):
+def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov5s', WORKERS = 8):
     global yolo_dir
 
     os.chdir(yolo_dir)
-    os.system(f'python train.py --workers {WORKERS} --device 0 --epochs {EPOCHS} --batch-size {BATCH} --data {os.path.abspath(os.path.join("raw_dataset", "data.yaml"))} --img {DIM} {DIM} --cfg cfg/training/yolov7.yaml --weights "" --name {MODEL} --hyp data/hyp.scratch.p5.yaml')
-#    os.system(f'python3 train.py --img {DIM} --batch {BATCH} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache')
+#    os.system(f'python train.py --workers {WORKERS} --device 0 --epochs {EPOCHS} --batch-size {BATCH} --data {os.path.abspath(os.path.join("raw_dataset", "data.yaml"))} --img {DIM} {DIM} --cfg cfg/training/yolov7.yaml --weights "" --name {MODEL} --hyp data/hyp.scratch.p5.yaml')
+    os.system(f'python train.py --img {DIM} --batch {BATCH} --workers {WORKERS} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache')
     os.chdir('../')
 
-def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov7'):
+def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov5s'):
     global yolo_dir
     global yolo_url
     global PHOTO_DIRECTORY
@@ -153,14 +153,17 @@ def get_exp_dir(exp_upper_dir):
                 cur_num = pot_num
     
     return f'exp{cur_num}' if cur_num is not 1 else 'exp'
-            
 
-def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 7000, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 16, EPOCHS = 50, MAX_TRAINS = 3):
+def perform_data_augs():
+    pass
+
+
+def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 7000, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 8, EPOCHS = 50, MAX_TRAINS = 3):
     global yolo_dir
     global PHOTO_DIRNAME
     global PHOTO_DIRECTORY
 
-    setup_and_train_yolo(input_config_yaml, DIM, 32, 100)
+    setup_and_train_yolo(input_config_yaml, DIM, 8, 100)
     webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
 
     while webdl.has_next_batch():
@@ -178,8 +181,7 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
             
             #Try to move data to GPU if possible
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            model = torch.hub.load('WongKinYiu/yolov7', 'yolov7')
-            model.load_state_dict(torch.load(model_fp)['model'].state_dict())
+            model = torch.hub.load('ultralytics/yolov5', 'custom', path = model_fp)
 
             model.to(device)
             model.eval()            
@@ -198,7 +200,6 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 
             add_to_dataset = False
             preds = results.pandas().xyxy[i].values.tolist()
-            del results
 
             for pred in preds:
                 if pred[4] >= CONFIDENCE_THRESHOLD and pred[-1] == label_batch[i]:        
@@ -290,18 +291,172 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
     if os.path.exists(yolo_dir):
         os.rmdir(yolo_dir)
 
+'''
 def run_object_detection_annotation(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 7000, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 16, EPOCHS = 50, MAX_TRAINS = 3):
     global yolo_dir
     global PHOTO_DIRNAME
     global PHOTO_DIRECTORY
 
-    setup_and_train_yolo(input_config_yaml, DIM, 32, 100)
+    setup_and_train_yolo(input_config_yaml, DIM, 8, 100)
     
+    #Homegenize all the data 
+    adl = AnnotationDataLoader(input_config_yaml['input_dir'])
 
+    perform_data_augs()
+
+    #Store unclassified data 
+    unlabeled_imgs = []
+    unlabeled_labels = []
+
+    while adl.has_next_batch():
+        #Load the model
+        model_fp = os.path.join( yolo_dir, 'runs', 'train', get_exp_dir(os.path.join(yolo_dir, 'runs', 'train')), 'weights', 'best.pt' )
+        
+        batch_type = adl.get_next_batch_type()
+        
+        img_batch, label_batch = adl.get_next_batch() #Returns all image urls for the current batch into img_batch
+        
+        results = None #Initialize to none at beginning
+
+        with torch.no_grad():
+            
+            #Try to move data to GPU if possible
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            model = torch.hub.load('ultralytics/yolov5', 'custom', path = model_fp)
+
+            model.to(device)
+            model.eval()            
+            results = model(img_batch) 
+
+            #Clear up any hanging memory
+            del model
+            torch.cuda.empty_cache()
+            gc.collect()
+
+        num_images_taken = 0
+        for i in range(len(img_batch)):
+
+
+            add_to_dataset = False
+            preds = results.pandas().xyxy[i].values.tolist()
+
+            for pred in preds:
+                if pred[4] >= CONFIDENCE_THRESHOLD and pred[-1] == label_batch[i]:        
+                    add_to_dataset = True
+                    break
+
+            if add_to_dataset:
+
+                img_fname = os.path.split(img_batch[i])[-1]
+                img_name = img_fname.split('.')[0]
+
+                #Copy the image from the photo_dir to the raw_dataset/train or raw_dataset/val directory
+                train_val = 'train' if batch_type == 'valtrain' else 'valid'
+                shutil.copyfile(img_batch[i], os.path.join(yolo_dir, 'raw_dataset', train_val, 'images', img_fname))
+
+                #Generate the label file in the raw_dataset/label/directory
+                with open(os.path.join(yolo_dir, 'raw_dataset', train_val, 'labels', f'{img_name}-label.txt'), 'w') as f: 
+                    
+                    img = Image.open(img_batch[i])
+                    img2 = cv2.imread(img_batch[i])
+
+
+                    w = int(img.size[0])
+                    h = int(img.size[1])
+
+                    for pred in preds:
+                        x, y, w, h = convert((w, h), (pred[1], pred[3], pred[2], pred[4]))
+                        print(f'{pred[5]} {x} {y} {w} {h}', file=f)
+                        img2 = draw_bbox(img2, int(pred[1]), int(pred[2]), int(pred[3]), int(pred[4]), text= pred[-1])
+
+                #Visualize image bounding boxes
+                if SAVE_BB_IMAGE:
+                    if train_val == 'train' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis')):
+                        os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis'))
+                    elif train_val == 'valid' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis')):
+                        os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis'))
+
+                    cv2.imwrite(os.path.join(yolo_dir, 'raw_dataset', train_val, 'vis', f'{img_name}-vis.jpg'), img2)
+        
+                #Clear up any hanging memory
+                torch.cuda.empty_cache()
+                gc.collect()
+
+                num_images_taken += 1
+            else:
+                unlabeled_imgs.append(img_batch[i])
+                unlabeled_labels.append(label_batch[i])
+
+        #Train the model again with the updated dirs
+        if batch_type == 'valtrain' and MAX_TRAINS > 0:
+            print('Training new model! More data, better model! :)')
+            MAX_TRAINS -= 1
+            train_yolo(DIM, BATCH, EPOCHS)
+            
+            #Clear up any hanging memory
+            torch.cuda.empty_cache()
+            gc.collect()
+
+    #Create a new batch for the unbatched:
+    adl.clear_batches()
+    adl.set_data_and_batch_evenly(unlabeled_imgs, unlabeled_labels)
+
+    while adl.has_next_batch():
     
-    pass
+    	img_batch, label_batch = adl.get_next_batch() #Returns all image urls for the current batch into img_batch
 
-'''
+        with torch.no_grad():
+            
+            #Try to move data to GPU if possible
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            model = torch.hub.load('ultralytics/yolov5', 'custom', path = model_fp)
+
+            model.to(device)
+            model.eval()            
+            results = model(img_batch) 
+
+            #Clear up any hanging memory
+            del model
+            torch.cuda.empty_cache()
+            gc.collect()
+
+        for i in range(len(img_batch)):
+            img_fname = os.path.split(img_batch[i])[-1]
+            img_name = img_fname.split('.')[0]
+
+            #Copy the image from the photo_dir to the raw_dataset/train or raw_dataset/val directory
+            train_val = 'train' if batch_type == 'valtrain' else 'valid'
+            shutil.copyfile(img_batch[i], os.path.join(yolo_dir, 'raw_dataset', train_val, 'images', img_fname))
+
+            #Generate the label file in the raw_dataset/label/directory
+            with open(os.path.join(yolo_dir, 'raw_dataset', train_val, 'labels', f'{img_name}-label.txt'), 'w') as f: 
+                
+                img = Image.open(img_batch[i])
+                img2 = cv2.imread(img_batch[i])
+
+
+                w = int(img.size[0])
+                h = int(img.size[1])
+
+                for pred in preds:
+                    x, y, w, h = convert((w, h), (pred[1], pred[3], pred[2], pred[4]))
+                    print(f'{pred[5]} {x} {y} {w} {h}', file=f)
+                    img2 = draw_bbox(img2, int(pred[1]), int(pred[2]), int(pred[3]), int(pred[4]), text= pred[-1])
+
+            #Visualize image bounding boxes
+            if SAVE_BB_IMAGE:
+                if train_val == 'train' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis')):
+                    os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis'))
+                elif train_val == 'valid' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis')):
+                    os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis'))
+
+                cv2.imwrite(os.path.join(yolo_dir, 'raw_dataset', train_val, 'vis', f'{img_name}-vis.jpg'), img2)
+
+            #Clear up any hanging memory
+            torch.cuda.empty_cache()
+            gc.collect()
+
+
 Runtime Errors to note: 
 
 RuntimeError: CUDA error: out of memory - Fix by lowering batch Size

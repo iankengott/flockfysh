@@ -3,9 +3,6 @@ from argparse import Namespace
 from cygnusx1.bot import main as scrape_google_images
 from bing_images import bing
 from yahoo_images import yahoo
-import numpy as np
-import cv2
-from PIL import Image
 
 
 class WebDataLoader:
@@ -22,7 +19,7 @@ class WebDataLoader:
 		# For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
 		# uncomment below line in final vers, commented for debugging ease
 		self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
-		#self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
+		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
 	def download_images_from_bing(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
@@ -92,8 +89,8 @@ class WebDataLoader:
 			if cur_image_count[i] < images_per_label:
 				self.download_images_from_yahoo(classnames[i], images_per_label)
 				cur_image_count[i] += len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+		
 		#Then distribute the remainder into each of the classnames
-
 		for i in range(len(classnames)):
 			
 			#Make up for any shortages using the google downloader
