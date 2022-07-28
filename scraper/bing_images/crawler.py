@@ -2,6 +2,8 @@ from urllib.parse import quote
 import shutil
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.keys import Keys
+
 
 import time
 import json
@@ -19,31 +21,41 @@ def gen_query_url(keywords, filters, extra_query_params=''):
 
 
 def image_url_from_webpage(driver, max_number=10000):
-    image_urls = list()
+    image_urls = set()
 
-    time.sleep(1)
+    time.sleep(5)
     img_count = 0
 
-    while True:
+    lookforbutton = True
+    reached_page_end = False
+    last_height = driver.execute_script("return document.body.scrollHeight")
+
+    while not reached_page_end:
         image_elements = driver.find_elements_by_class_name("iusc")
         if len(image_elements) > max_number:
             break
-        if len(image_elements) > img_count:
-            img_count = len(image_elements)
+        if lookforbutton:
             driver.execute_script(
-                "window.scrollTo(0, document.body.scrollHeight);")
-        else:
+                "window.scrollBy(0, 1000);")
             smb = driver.find_elements_by_class_name("btn_seemore")
             if len(smb) > 0 and smb[0].is_displayed():
+                print('See more button clicked.')
                 smb[0].click()
+                lookforbutton = False
+        else:
+            driver.execute_script("window.scrollBy(0, 1000);")
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            if last_height == new_height:
+                reached_page_end = True
             else:
-                break
+                last_height = new_height
+
         time.sleep(1)
     for image_element in image_elements:
         m_json_str = image_element.get_attribute("m")
         m_json = json.loads(m_json_str)
-        image_urls.append(m_json["murl"])
-    return image_urls
+        image_urls.add(m_json["murl"])
+    return list(image_urls)
 
 
 def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type="http", extra_query_params=''):

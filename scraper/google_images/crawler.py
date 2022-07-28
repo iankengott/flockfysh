@@ -1,17 +1,22 @@
+from lib2to3.pgen2 import driver
 from urllib.parse import quote
 import shutil
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
 import time
 import json
 
-BASE_URL = "https://images.search.yahoo.com/search/images;_ylt=Awr488YjaOBiVSwDNS2LuLkF;_ylc=X1MDOTYwNTc0ODMEX3IDMgRmcgMEZ3ByaWQDMDNHaEZ3c0VRUEMxZkxyYU9HdjlOQQRuX3N1Z2cDMTAEb3JpZ2luA2ltYWdlcy5zZWFyY2gueWFob28uY29tBHBvcwMwBHBxc3RyAwRwcXN0cmwDBHFzdHJsAzQEcXVlcnkDY29kZQR0X3N0bXADMTY1ODg3Mzg5Mw--?fr2=sb-top-images.search"
+from google_images.config import (GOOGLE_SUGGEST_CLASS, GOOGLE_THUBNAILS_XPATH,
+                             GOOGLE_IMAGE_FULLSIZE_XPATH, GOOGLE_IMAGE_LOADING_BAR_XPATH)
+
+BASE_URL = "https://www.google.com/search"
 
 
 def gen_query_url(keywords, filters, extra_query_params=''):
-    keywords_str = "&p=" + quote(keywords)
-    query_url = BASE_URL + keywords_str
+    keywords_str = "?q=" + quote(keywords)
+    query_url = BASE_URL + keywords_str + '&source=lnms&tbm=isch&safe=off'
     return query_url
 
 
@@ -19,26 +24,28 @@ def image_url_from_webpage(driver, max_number=10000):
     image_urls = set()
 
     time.sleep(5)
-    img_count = 0
 
-    while True:
-        image_elements = driver.find_elements_by_class_name("img")
-        if len(image_elements) > max_number:
-            break
-        if len(image_elements) > img_count:
-            img_count = len(image_elements)
-            driver.execute_script(
-                "window.scrollTo(0, document.body.scrollHeight);")
-        else:
-            smb = driver.find_elements_by_class_name("more-res")
-            if len(smb) > 0 and smb[0].is_displayed():
-                smb[0].click()
+    try:
+        last_height = driver.execute_script("return document.body.scrollHeight")
+        reached_page_end = False
+        while not reached_page_end:
+            driver.execute_script(f"window.scrollTo(0, {last_height});")
+            time.sleep(1)
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            if last_height == new_height:
+                reached_page_end = True
             else:
-                break
-        time.sleep(3)
+                last_height = new_height
+            try:
+                driver.find_element_by_class_name("mye4qd").click()
+            except:
+                continue
+        image_elements = driver.find_elements(By.XPATH, GOOGLE_THUBNAILS_XPATH)
+    except:
+        pass
+
     for image_element in image_elements:
-        img = image_element.find_element_by_tag_name('img')
-        src = img.get_attribute('src')
+        src = image_element.get_attribute('src')
         image_urls.add(src)
     return list(image_urls)
 
@@ -59,7 +66,6 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), chrome_options=chrome_options)
 
     query_url = gen_query_url(keywords, filters, extra_query_params=extra_query_params)
-    driver.set_window_size(3840, 2160)
     driver.get(query_url)
     image_urls = image_url_from_webpage(driver, max_number)
     driver.close()
