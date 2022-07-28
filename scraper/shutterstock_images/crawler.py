@@ -16,7 +16,6 @@ BASE_URL = "https://www.shutterstock.com/search/"
 
 
 def gen_query_url(keywords, filters, extra_query_params='', page=1):
-    print("Page " + str(page))
     keywords_str = quote(keywords)
     query_url = BASE_URL + keywords_str + f'?page={page}'
     return query_url
@@ -43,6 +42,7 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     #Modified from original to make headless
     chrome_options = webdriver.ChromeOptions()
     chrome_options.headless = True 
+    chrome_options.add_argument('log-level=3')
 
     if proxy is not None and proxy_type is not None:
         chrome_options.add_argument(
@@ -56,7 +56,8 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     i = 1
     while len(image_urls) < max_number:
         remaining = max_number - len(image_urls)
-        print(f'{remaining} images left to scrape.')
+        if i % 3 == 0 or i == 1:
+            print(f'{remaining} images left to scrape.')
         query_url = gen_query_url(keywords, filters, extra_query_params=extra_query_params, page=i)
         driver.get(query_url)
         image_urls.extend(image_url_from_webpage(driver, max_number))

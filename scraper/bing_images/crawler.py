@@ -68,6 +68,7 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     #Modified from original to make headless
     chrome_options = webdriver.ChromeOptions()
     chrome_options.headless = False 
+    chrome_options.add_argument('log-level=3')
 
     if proxy is not None and proxy_type is not None:
         chrome_options.add_argument(
