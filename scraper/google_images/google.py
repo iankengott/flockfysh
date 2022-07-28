@@ -56,23 +56,22 @@ def download_images(
 ):
     start = timer()
     image_dir = make_image_dir(output_dir, force_replace)
-    print("Save path: {}".format(image_dir))
 
     # Fetch more image URLs to avoid some images are invalid.
     max_number = math.ceil(limit)
     urls, len_urls_unfilter = fetch_image_urls(query, max_number, file_type, filters, extra_query_params=extra_query_params)
     entries = get_image_entries(urls, image_dir)
 
-    print("Downloading images")
+    print("Downloading images.")
     ps = pool_size
     if limit < pool_size:
         ps = limit
     
     cts = download_image_entries(entries, ps, limit)
 
-    print("Done")
+    print("Images downloaded.")
     elapsed = timer() - start
-    print("Elapsed time: %.2fs" % elapsed)
+    print("Elapsed time: %.2fs\n\n" % elapsed)
     return cts, len_urls_unfilter
 
 def download_image_entries(entries, pool_size, limit):

@@ -50,7 +50,7 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     
     #Update to handle webdriver
     driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), chrome_options=chrome_options)
-
+    print('\n\n')
     driver.set_window_size(1920, 1080)
     image_urls = list()
     i = 1

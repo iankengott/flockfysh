@@ -68,7 +68,7 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     
     #Update to handle webdriver
     driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), chrome_options=chrome_options)
-
+    print('\n\n')
     query_url = gen_query_url(keywords, filters, extra_query_params=extra_query_params)
     driver.get(query_url)
     image_urls = image_url_from_webpage(driver, max_number)
