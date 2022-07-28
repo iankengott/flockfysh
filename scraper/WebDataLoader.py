@@ -4,6 +4,7 @@ from cygnusx1.bot import main as scrape_google_images
 # from bing_images import bing
 from yahoo_images import yahoo
 from shutterstock_images import shutterstock
+from google_images import google
 import numpy as np
 import cv2
 from PIL import Image
@@ -74,22 +75,20 @@ class WebDataLoader:
 							extra_query_params='')
 			
 
-	def download_images_from_google(self, classname, num_workers = 8):
-		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR))
+	def download_images_from_google(self, classname, num_images):
+		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
 		print(f'Downloading images to {label_out_dir}')
-		# shouldn't go through because bing makes it
+
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
 
-		args = Namespace(
-			keywords = classname,
-			workers = num_workers,
-			headless = True, 
-			use_suggestions = True,
-			out_dir = label_out_dir,
-		)
-
-		scrape_google_images(args)
+		google.download_images(classname,
+							num_images,
+							output_dir=label_out_dir,
+							pool_size=10,
+							file_type="",
+							force_replace=False,
+							extra_query_params='')
 
 
 	def download_by_chunk(self, classnames, MAX_IMAGES, ignore_excess = False):
@@ -118,7 +117,7 @@ class WebDataLoader:
 		# Google
 		for i in range(len(classnames)):
 			if cur_image_count[i] < images_per_label:
-				self.download_images_from_google(classnames[i], num_workers = 8)
+				self.download_images_from_google(classnames[i], images_per_scraper)
 				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
 
 		# Shutterstock
