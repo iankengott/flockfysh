@@ -152,7 +152,12 @@ def get_exp_dir(exp_upper_dir):
             if pot_num > cur_num:
                 cur_num = pot_num
     
+<<<<<<< HEAD
     return f'exp{cur_num}' if cur_num is not 1 else 'exp'
+=======
+    return f'exp{cur_num}' if cur_num != 1 else 'exp'
+            
+>>>>>>> a03458ad493a993d6ce9d71a93f88301769f3198
 
 def perform_data_augs():
     pass

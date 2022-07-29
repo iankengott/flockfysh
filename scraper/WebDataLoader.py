@@ -1,6 +1,5 @@
 import os
 from argparse import Namespace
-# from bing_images import bing
 from yahoo_images import yahoo
 from shutterstock_images import shutterstock
 from google_images import google
@@ -28,7 +27,7 @@ class WebDataLoader:
 	
 	def download_images_from_shutterstock(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
-		print(f'Downloading images to {label_out_dir}')
+		print(f'Shutterstock scraper is downloading images to {label_out_dir}')
 
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
@@ -42,25 +41,9 @@ class WebDataLoader:
 							extra_query_params='')
 
 	
-	# def download_images_from_bing(self, classname, num_images):
-	# 	label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
-	# 	print(f'Downloading images to {label_out_dir}')
-
-	# 	if not os.path.exists(label_out_dir):
-	# 		os.makedirs(label_out_dir)
-
-	# 	bing.download_images(classname,
-	# 						num_images,
-	# 						output_dir=label_out_dir,
-	# 						pool_size=10,
-	# 						file_type="",
-	# 						force_replace=True,
-	# 						extra_query_params='&first=1')
-
-
 	def download_images_from_yahoo(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
-		print(f'Downloading images to {label_out_dir}')
+		print(f'Yahoo scraper is downloading images to {label_out_dir}')
 
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
@@ -76,7 +59,7 @@ class WebDataLoader:
 
 	def download_images_from_google(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
-		print(f'Downloading images to {label_out_dir}')
+		print(f'Google scraper is downloading images to {label_out_dir}')
 
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
@@ -93,9 +76,9 @@ class WebDataLoader:
 	def download_by_chunk(self, classnames, MAX_IMAGES, ignore_excess = False):
 
 		images_per_label = MAX_IMAGES // len(classnames)
-		print(f'Downloading {images_per_label} images for each category first')
+		print(f'Downloading {images_per_label} images for each category.')
 
-		# shutterstock, yahoo, google (bing not used)
+		# shutterstock, yahoo, google 
 		num_scrapers = 3 
 
 		cur_image_count = [0] * len(classnames)
