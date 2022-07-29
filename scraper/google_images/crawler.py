@@ -14,6 +14,9 @@ import json
 from google_images.config import (GOOGLE_SUGGEST_CLASS, GOOGLE_THUBNAILS_XPATH,
                              GOOGLE_IMAGE_FULLSIZE_XPATH, GOOGLE_IMAGE_LOADING_BAR_XPATH)
 
+import logging
+logging.getLogger('WDM').setLevel(logging.NOTSET)
+
 BASE_URL = "https://www.google.com/search"
 
 
@@ -60,7 +63,8 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     #Modified from original to make headless
     chrome_options = webdriver.ChromeOptions()
     chrome_options.headless = True 
-    chrome_options.add_argument('log-level=3')
+    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+
 
     if proxy is not None and proxy_type is not None:
         chrome_options.add_argument(
