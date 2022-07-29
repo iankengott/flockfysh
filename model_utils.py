@@ -59,12 +59,29 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov7'
             if os.path.exists(pth):
                 os.rmdir(pth)
 
+    print('Reducing RAM usage ...')
+    ram = str(input('Would you like RAM usage to be decreased? [Y/n]: ')).upper()
+    if ram == 'Y':
+        again = True
+        while again:
+            venv_path = str(input('Enter the relative path to your virtual environment [ex: ..\\venv or \\venv]: '))
+            dll_dir = os.path.abspath(os.path.join(venv_path, 'Lib\\site-packages\\torch\\lib'))
+            print(dll_dir)
+            if not os.path.exists(dll_dir):
+                again = str(input('Path does not exist or torch is not installed. Try again? [Y/n]: ')).upper() == 'Y'
+                continue
+            again = False
+            dll_files = os.path.join(dll_dir, '*.dll')
+            try:
+                os.system(f'python ram_reducer.py --input="{dll_files}"')
+            except:
+                print('Reducing RAM usage process failed. Skipping reducing RAM usage process.')
+
     print('Cloning yolo repo ...')
     os.system(f"git clone {yolo_url}")
 
     print('Installing requirements ...')
     os.system(f"pip3 install -qr {yolo_dir}/requirements.txt")
-
 
     data_yaml_fp = setup_raw_dataset(yolo_dir, input_config_yaml)
     train_yolo(DIM, BATCH, EPOCHS, MODEL)
