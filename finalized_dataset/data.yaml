@@ -1,8 +1,0 @@
-names:
-- Bed Bug
-- Fire ant
-- Tick
-- Wasp
-nc: 4
-train: ../yolov5/raw_dataset/train/images
-val: ../yolov5/raw_dataset/valid/images

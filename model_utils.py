@@ -43,12 +43,11 @@ def setup_raw_dataset(yolo_dir, input_config_yaml):
 
 	return os.path.join(yolo_dir, 'raw_dataset', 'data.yaml')
 	
-def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov5s', WORKERS = 8):
+def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov5s', WORKERS = 8, use_default_augs = False):
 	global yolo_dir
 
 	os.chdir(yolo_dir)
-#    os.system(f'python train.py --workers {WORKERS} --device 0 --epochs {EPOCHS} --batch-size {BATCH} --data {os.path.abspath(os.path.join("raw_dataset", "data.yaml"))} --img {DIM} {DIM} --cfg cfg/training/yolov7.yaml --weights "" --name {MODEL} --hyp data/hyp.scratch.p5.yaml')
-	os.system(f'python train.py --img {DIM} --batch {BATCH} --workers {WORKERS} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache')
+	os.system(f'python train.py --img {DIM} --batch {BATCH} --workers {WORKERS} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache {"--augment" if use_default_augs else ""}' )
 	os.chdir('../')
 
 def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov5s'):
@@ -64,6 +63,7 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov5s
 				os.rmdir(pth)
 
 	#TODO: add code to delete any cached json files
+	[os.remove(file) for file in glob.glob("*.json" , recursive=True)]
 
 	print('Cloning yolo repo ...')
 	os.system(f"git clone {yolo_url}")
@@ -73,7 +73,16 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov5s
 
 
 	data_yaml_fp = setup_raw_dataset(yolo_dir, input_config_yaml)
-	train_yolo(DIM, BATCH, EPOCHS, MODEL)
+
+	global_cnt = 0
+	for path in ['train', 'valid']:
+		for pth in os.listdir(os.path.join(yolo_dir, 'raw_dataset', path, 'images')):
+			os.rename(os.path.join(yolo_dir, 'raw_dataset' , path, 'images', pth), os.path.join(yolo_dir, 'raw_dataset' , path, 'images', f'image-{global_cnt + 1}.{pth.split(".")[-1]}'))
+			os.rename(os.path.join(yolo_dir, 'raw_dataset', path, 'labels', f'{pth[:pth.rfind(".")]}.txt'), os.path.join(yolo_dir, 'raw_dataset' , path, 'labels', f'image-{global_cnt + 1}.txt'))
+			global_cnt += 1
+
+
+	train_yolo(DIM, BATCH, EPOCHS, MODEL, use_default_augs=True)
 
 def convert(size, box):
 
@@ -126,10 +135,12 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 	global PHOTO_DIRNAME
 	global PHOTO_DIRECTORY
 
+	#Reformat the image names
+
+
 	setup_and_train_yolo(input_config_yaml, DIM, 8, 100)
 	webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
 	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(input_config_yaml["class_names"]))]
-	img_num = 1
 
 	while webdl.has_next_batch():
 
@@ -182,7 +193,7 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 				train_val = 'train' if batch_type == 'valtrain' else 'valid'
 
 				#Generate the label file in the raw_dataset/label/directory
-				with open(os.path.join(yolo_dir, 'raw_dataset', train_val, 'labels', f'image-{img_num}.txt'), 'w') as f: 
+				with open(os.path.join(yolo_dir, 'raw_dataset', train_val, 'labels', f'image-{webdl.get_total_ds_imgs() + 1}.txt'), 'w') as f: 
 					
 					img = Image.open(img_batch[i])
 					img2 = cv2.imread(img_batch[i])
@@ -195,26 +206,22 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 						print(f'Error: {img_batch[i]} has width {w} and height {h}')
 					else:
 						for pred in preds:
-							print(f'Yolo Predictions {pred}')
-							print(f'Width and Height: {(w, h)}')
-							print(f'Ordered for conversion: {(pred[0], pred[2], pred[1], pred[3])}')
-
 							x, y, w, h = convert((w, h), (pred[0], pred[2], pred[1], pred[3]))
 							print(f'{pred[5]} {x} {y} {w} {h}', file=f)
 							
 							plot_one_box(pred[0:4], img2, label=pred[-1], color=colors[pred[5]], line_thickness=3)
 
 
-						shutil.copyfile(img_batch[i], os.path.join(yolo_dir, 'raw_dataset', train_val, 'images', f'image-{img_num}.{img_ext}'))
+						shutil.copyfile(img_batch[i], os.path.join(yolo_dir, 'raw_dataset', train_val, 'images', f'image-{webdl.get_total_ds_imgs() + 1}.{img_ext}'))
 						if SAVE_BB_IMAGE and add_to_dataset:
 							if train_val == 'train' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis')):
 								os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis'))
 							elif train_val == 'valid' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis')):
 								os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis'))
 
-							cv2.imwrite(os.path.join(yolo_dir, 'raw_dataset', train_val, 'vis', f'image-{img_num}-vis.jpg'), img2)
+							cv2.imwrite(os.path.join(yolo_dir, 'raw_dataset', train_val, 'vis', f'image-{webdl.get_total_ds_imgs() + 1}-vis.jpg'), img2)
 						
-						num_images_taken += 1
+						webdl.update_number_images_taken(1)
 
 				#Clear up any hanging memory
 				torch.cuda.empty_cache()
@@ -245,7 +252,7 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 	print('Deleting unncessary intermediate directories ...')
 	
 	#Perform cleanup 
-	
+
 	#1 - Delete the temp images we collected
 	shutil.rmtree(PHOTO_DIRECTORY)
 	if os.path.exists(PHOTO_DIRECTORY):

@@ -22,7 +22,7 @@ class WebDataLoader:
 
 		# For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
 		# uncomment below line in final vers, commented for debugging ease
-		self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
+		self.download_by_chunk(self.labels, self.MAX_IMAGES * 4, ignore_excess = False)
 		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
 	
@@ -162,14 +162,25 @@ class WebDataLoader:
 
 		return "valtrain" if self.get_total_ds_imgs() < self.MAX_TRAIN_IMAGES else "val"
 
-	def update_number_images_taken(self, num_images_taken):
-		self.current_num_images += num_images_taken
+	def update_number_images_taken(self, num_images_taken, absolute = False):
+		if not absolute:
+			self.current_num_images += num_images_taken
+		else:
+			self.current_num_images = num_images_taken
 
 	def get_next_batch(self):
 		if not self.has_next_batch():
 			raise Exception("Trying to access a batch that doesn't exist. The current len of self.img_batches is 0.")
 
 		self.batch_ptr += 1
+
+		if self.MAX_IMAGES - self.current_num_images < len(self.img_batches[self.batch_ptr - 1]):
+			imgs = self.img_batches[self.batch_ptr - 1][:(self.MAX_IMAGES - self.current_num_images)]
+			lbls = self.label_batches[self.batch_ptr - 1][:(self.MAX_IMAGES - self.current_num_images)]
+
+			self.clear_batches()
+			return (imgs, lbls)
+
 		return (self.img_batches[self.batch_ptr - 1], self.label_batches[self.batch_ptr - 1])
 	
 	def reset_batch_ptr(self):
