@@ -22,7 +22,7 @@ if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
 
 
-yolo_url = 'https://github.com/ultralytics/yolov5'  #'https://github.com/WongKinYiu/yolov7' #Uncomment to use yolov7 
+yolo_url = 'https://github.com/WongKinYiu/yolov7'  # 'https://github.com/ultralytics/yolov5' #Uncomment to use yolov7 
 yolo_dir = yolo_url.split('/')[-1]
 PHOTO_DIRNAME = 'photos'
 PHOTO_DIRECTORY = os.path.join('scraper', PHOTO_DIRNAME)
@@ -39,18 +39,15 @@ def setup_raw_dataset(yolo_dir, input_config_yaml):
 
     return os.path.join(yolo_dir, 'raw_dataset', 'data.yaml')
     
-def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov5s6'):
+def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov7', WORKERS = 8):
     global yolo_dir
 
     os.chdir(yolo_dir)
-    python_call_version = 'python3'
-    if os.system(python_call_version) != 0:
-        print("Changing from python3 to python ...")
-        python_call_version = 'python'
-    os.system(f'{python_call_version} train.py --img {DIM} --batch {BATCH} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache')
+    os.system(f'python train.py --workers {WORKERS} --device 0 --epochs {EPOCHS} --batch-size {BATCH} --data {os.path.abspath(os.path.join("raw_dataset", "data.yaml"))} --img {DIM} {DIM} --cfg cfg/training/yolov7.yaml --weights "" --name {MODEL} --hyp data/hyp.scratch.p5.yaml')
+#    os.system(f'python3 train.py --img {DIM} --batch {BATCH} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache')
     os.chdir('../')
 
-def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL ):
+def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov7'):
     global yolo_dir
     global yolo_url
     global PHOTO_DIRECTORY
@@ -66,22 +63,11 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL ):
     os.system(f"git clone {yolo_url}")
 
     print('Installing requirements ...')
-    os.system(f"pip install -qr yolov5/requirements.txt")
+    os.system(f"pip3 install -qr {yolo_dir}/requirements.txt")
 
 
     data_yaml_fp = setup_raw_dataset(yolo_dir, input_config_yaml)
     train_yolo(DIM, BATCH, EPOCHS, MODEL)
-
-
-#SRC: https://github.com/ultralytics/yolov5/blob/ea34f848a6afbe1fc0010745fdc5f356ed871909/utils/utils.py (lines 159-166)
-def xyxy2xywh(x):
-    # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] where xy1=top-left, xy2=bottom-right
-    y = torch.zeros_like(x) if isinstance(x, torch.Tensor) else np.zeros_like(x)
-    y[:, 0] = (x[:, 0] + x[:, 2]) / 2  # x center
-    y[:, 1] = (x[:, 1] + x[:, 3]) / 2  # y center
-    y[:, 2] = x[:, 2] - x[:, 0]  # width
-    y[:, 3] = x[:, 3] - x[:, 1]  # height
-    return y
 
 def convert(size, box):
     dw = 1./size[0]
@@ -166,15 +152,15 @@ def get_exp_dir(exp_upper_dir):
             if pot_num > cur_num:
                 cur_num = pot_num
     
-    return f'exp{cur_num}' if cur_num is not 1 else 'exp'
+    return f'exp{cur_num}' if cur_num != 1 else 'exp'
             
 
-def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 7000, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 416, BATCH = 8, EPOCHS = 50, MODEL = 'yolov5s6'):
+def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 7000, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 16, EPOCHS = 50, MAX_TRAINS = 3):
     global yolo_dir
     global PHOTO_DIRNAME
     global PHOTO_DIRECTORY
 
-    #setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL)
+    setup_and_train_yolo(input_config_yaml, DIM, 32, 100)
     webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
 
     while webdl.has_next_batch():
@@ -192,7 +178,9 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
             
             #Try to move data to GPU if possible
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            model = torch.hub.load('ultralytics/yolov5', 'custom', path = model_fp, force_reload = True)
+            model = torch.hub.load('WongKinYiu/yolov7', 'yolov7')
+            model.load_state_dict(torch.load(model_fp)['model'].state_dict())
+
             model.to(device)
             model.eval()            
             results = model(img_batch) 
@@ -210,7 +198,8 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 
             add_to_dataset = False
             preds = results.pandas().xyxy[i].values.tolist()
-            
+            del results
+
             for pred in preds:
                 if pred[4] >= CONFIDENCE_THRESHOLD and pred[-1] == label_batch[i]:        
                     add_to_dataset = True
@@ -248,17 +237,23 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
                         os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis'))
 
                     cv2.imwrite(os.path.join(yolo_dir, 'raw_dataset', train_val, 'vis', f'{img_name}-vis.jpg'), img2)
-
+        
+                #Clear up any hanging memory
+                torch.cuda.empty_cache()
+                gc.collect()
 
                 num_images_taken += 1
+    
+
 
         #Update the total number of images on the webdl end
         webdl.update_number_images_taken(num_images_taken)
 
         #Train the model again with the updated dirs
-        if batch_type == 'valtrain':
+        if batch_type == 'valtrain' and MAX_TRAINS > 0:
             print('Training new model! More data, better model! :)')
-            train_yolo(DIM, BATCH, EPOCHS , MODEL )
+            MAX_TRAINS -= 1
+            train_yolo(DIM, BATCH, EPOCHS)
             
             #Clear up any hanging memory
             torch.cuda.empty_cache()
@@ -290,14 +285,25 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
     shutil.move(model_dir, '.')
     os.rename(exp_dir, 'best_model_info')
 
-    print('Deleting the unnecessary yolov5 directory')
+    print(f'Deleting the unnecessary {yolo_dir} directory')
     shutil.rmtree(yolo_dir)
     if os.path.exists(yolo_dir):
         os.rmdir(yolo_dir)
+
+def run_object_detection_annotation(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 7000, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 16, EPOCHS = 50, MAX_TRAINS = 3):
+    global yolo_dir
+    global PHOTO_DIRNAME
+    global PHOTO_DIRECTORY
+
+    setup_and_train_yolo(input_config_yaml, DIM, 32, 100)
+    
+
+    
+    pass
 
 '''
 Runtime Errors to note: 
 
 RuntimeError: CUDA error: out of memory - Fix by lowering batch Size
-
+RuntimeError: cuDNN error: CUDNN_STATUS_NOT_INITIALIZED (re-init GPU, install 1.8.0)
 '''

@@ -3,25 +3,55 @@ import shutil
 import posixpath
 import urllib
 import os
+import imghdr
+import validators
+import base64
+import uuid
 
-DEFAULT_OUTPUT_DIR = "bing-images"
+from PIL import Image
+
+DEFAULT_OUTPUT_DIR = "images"
+
+
+def valid_image(file_path: str) -> None:
+    file_path = file_path
+    raw_name, ext = os.path.splitext(file_path)
+    img_type = imghdr.what(file_path) or "jpeg"
+    if f".{img_type}" != ext:
+        new_file_path = f"{raw_name}.{img_type}"
+        shutil.move(file_path, new_file_path)
+        file_path = new_file_path
+    try:
+        img = Image.open(file_path)
+        width, height = img.size
+        if width == 0 or height == 0:
+            os.remove(file_path)
+        else:
+            img = img.convert("RGB")
+            img.save(file_path)
+    except:
+        os.remove(file_path)
+
+
+def get_uuid() -> str:
+    return str(uuid.uuid4().hex)
 
 
 def download_image(url, path) -> bool:
     try:
-        r = requests.get(url, stream=True)
-        if r.status_code == 200:
-            with open(path, 'wb') as f:
+        r = requests.get(url, stream=True, timeout=10, verify=False)
+        if r.ok:
+            ext = r.headers['Content-Type'].split("/")[-1].strip()
+            filename = os.path.join(path, f'{get_uuid()}.{ext}')
+            with open(filename, 'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
-            return True
+                # f.write(r.content)
+            valid_image(filename)
         else:
-            print("[!] Download image: {}\n[!] Err :: {}".format(
-                url, r.status_code))
             return False
     except Exception as e:
-        print("[!] Download image: {}\n[!] Err :: {}".format(url, e))
-        return False
+        return False 
 
 
 def get_file_name(url, index, prefix='image') -> str:

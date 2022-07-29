@@ -1,7 +1,8 @@
 import os
 from argparse import Namespace
-from cygnusx1.bot import main as scrape_google_images
-from bing_images import bing
+from yahoo_images import yahoo
+from shutterstock_images import shutterstock
+from google_images import google
 import numpy as np
 import cv2
 from PIL import Image
@@ -18,63 +19,92 @@ class WebDataLoader:
 		self.current_num_images = self.starting_num_images
 		self.batch_ptr = 0
 
-		#For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
-		#self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
-		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
+		# For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
+		# uncomment below line in final vers, commented for debugging ease
+		self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
+		#self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
-	def download_images_from_bing(self, classname, num_images):
+	
+	def download_images_from_shutterstock(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
-		print(f'Downloading images to {label_out_dir}')
+		print(f'Shutterstock scraper is downloading images to {label_out_dir}')
 
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
 
-		bing.download_images(classname,
+		shutterstock.download_images(classname,
 							num_images,
 							output_dir=label_out_dir,
 							pool_size=10,
-							file_type="png",
-							force_replace=True,
-							extra_query_params='&first=1')
+							file_type="",
+							force_replace=False,
+							extra_query_params='')
 
-	def download_images_from_google(self, classname, num_workers = 8):
+	
+	def download_images_from_yahoo(self, classname, num_images):
 		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
-		print(f'Downloading images to {label_out_dir}')
+		print(f'Yahoo scraper is downloading images to {label_out_dir}')
+
 		if not os.path.exists(label_out_dir):
 			os.makedirs(label_out_dir)
 
-		args = Namespace(
-			keywords = classname,
-			workers = num_workers,
-			headless = True, 
-			use_suggestions = True,
-			out_dir = label_out_dir,
-		)
+		yahoo.download_images(classname,
+							num_images,
+							output_dir=label_out_dir,
+							pool_size=10,
+							file_type="",
+							force_replace=False,
+							extra_query_params='')
+			
 
-		scrape_google_images(args)
+	def download_images_from_google(self, classname, num_images):
+		label_out_dir = os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classname))
+		print(f'Google scraper is downloading images to {label_out_dir}')
+
+		if not os.path.exists(label_out_dir):
+			os.makedirs(label_out_dir)
+
+		google.download_images(classname,
+							num_images,
+							output_dir=label_out_dir,
+							pool_size=10,
+							file_type="",
+							force_replace=False,
+							extra_query_params='')
+
 
 	def download_by_chunk(self, classnames, MAX_IMAGES, ignore_excess = False):
 
 		images_per_label = MAX_IMAGES // len(classnames)
-		print(f'Downloading {images_per_label} images for each category first')
+		print(f'Downloading {images_per_label} images for each category.')
 
-		cur_image_count = []
+		# shutterstock, yahoo, google 
+		num_scrapers = 3 
 
-		#Evenly split all the images first using the Bing Downloader
-		for label in classnames:
-			self.download_images_from_bing(label, images_per_label)
-			cur_image_count.append(len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, label)))))
-		
-		#Then distribute the remainder into each of the classnames
+		cur_image_count = [0] * len(classnames)
+		images_per_scraper = images_per_label // num_scrapers + 1
+
+		# Yahoo
 		for i in range(len(classnames)):
-			
-			#Make up for any shortages using the google downloader
 			if cur_image_count[i] < images_per_label:
-				self.download_images_from_google(classnames[i], num_workers = 8)
+				self.download_images_from_yahoo(classnames[i], images_per_scraper)
+				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+		
+		# Google
+		for i in range(len(classnames)):
+			if cur_image_count[i] < images_per_label:
+				self.download_images_from_google(classnames[i], images_per_scraper)
+				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
 
-				if not ignore_excess:
-					print('Excess has been specified to be removed, set ignore_excess to be True if the extra images is wanted')
-					[os.remove(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i], f))) for f in os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i])))[images_per_label:] ]
+		# Shutterstock
+		for i in range(len(classnames)):
+			if cur_image_count[i] < images_per_label:
+				self.download_images_from_shutterstock(classnames[i], images_per_label - cur_image_count[i])
+				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+
+		if not ignore_excess:
+			print('Excess has been specified to be removed, set ignore_excess to be True if the extra images is wanted')
+			[os.remove(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i], f))) for f in os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i])))[images_per_label:] ]
 
 	def batch_images(self, classnames, starting_img_per_batch = 50):
 		img_batches = []
@@ -102,18 +132,6 @@ class WebDataLoader:
 						completed[i] = True
 
 					last_image_index[i] = min(last_image_index[i] + starting_img_per_batch, total_files_per_class[i])
-
-			print('Final checks on the current batch')
-			for j in range(len(image_batch)):
-				try:
-					if j < len(image_batch):
-						img = Image.open(image_batch[j]).convert("RGB")
-						img.save(image_batch[j])
-				except Exception as e:
-					image_batch.pop(j)
-					label_batch.pop(j)
-					j -= 1
-					print(e)
 
 					
 
@@ -155,3 +173,14 @@ class WebDataLoader:
 	
 	def reset_batch(self):
 		self.batch_ptr = 0
+
+class AnnotationDataLoader:
+	def __init__(self, labels, dataset_dir):
+		self.labels = labels
+		self.starting_num_images = len(os.listdir(os.path.join(dataset_dir, 'train' , 'images'))) + len(os.listdir(os.path.join(dataset_dir, 'valid' , 'images')))
+		self.current_num_images = self.starting_num_images
+		self.batch_ptr = 0
+
+		#For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
+		self.download_by_chunk(self.labels, self.MAX_IMAGES, ignore_excess = False)
+		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)

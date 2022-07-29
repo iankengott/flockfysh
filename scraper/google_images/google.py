@@ -1,8 +1,4 @@
 try:
-    from util import get_file_name, rename, make_image_dir, download_image
-except ImportError:  # Python 3
-    from .util import get_file_name, rename, make_image_dir, download_image
-try:
     from crawler import crawl_image_urls
 except ImportError:  # Python 3
     from .crawler import crawl_image_urls
@@ -12,12 +8,19 @@ from time import time as timer
 import os
 import math
 
+import sys
+sys.path.append('../scraper')
+try:
+    from scraper.util import get_file_name, rename, make_image_dir, download_image
+except ImportError:  # Python 3
+    from scraper.util import get_file_name, rename, make_image_dir, download_image
+
 _FINISH = False
 
 
 def fetch_image_urls(
     query: str,
-    limit: int = 20,
+    limit: int = 200,
     file_type: str = '',
     filters: str = '',
     extra_query_params: str =''
@@ -26,13 +29,13 @@ def fetch_image_urls(
     keywords = query
     if len(file_type) > 0:
         keywords = query + " " + file_type
-    urls = crawl_image_urls(keywords, filters, limit, extra_query_params=extra_query_params)
+    urls, len_urls_unfilter = crawl_image_urls(keywords, filters, limit, extra_query_params=extra_query_params)
     for url in urls:
         if isValidURL(url, file_type) and url not in result:
             result.append(url)
             if len(result) >= limit:
                 break
-    return result
+    return result, len_urls_unfilter
 
 
 def isValidURL(url, file_type):
@@ -53,41 +56,23 @@ def download_images(
 ):
     start = timer()
     image_dir = make_image_dir(output_dir, force_replace)
-    print("Save path: {}".format(image_dir))
 
     # Fetch more image URLs to avoid some images are invalid.
-    max_number = math.ceil(limit*1.5)
-    urls = fetch_image_urls(query, max_number, file_type, filters, extra_query_params=extra_query_params)
+    max_number = math.ceil(limit)
+    urls, len_urls_unfilter = fetch_image_urls(query, max_number, file_type, filters, extra_query_params=extra_query_params)
     entries = get_image_entries(urls, image_dir)
 
-    print("Downloading images")
+    print("Downloading images.")
     ps = pool_size
     if limit < pool_size:
         ps = limit
-    download_image_entries(entries, ps, limit)
+    
+    cts = download_image_entries(entries, ps, limit)
 
-    rename_images(image_dir, query)
-
-    print("Done")
+    print("Images downloaded.")
     elapsed = timer() - start
-    print("Elapsed time: %.2fs" % elapsed)
-
-
-def rename_images(dir, prefix):
-    files = os.listdir(dir)
-    index = 1
-    print("Renaming images")
-    for f in files:
-        if f.startswith("."):
-            print("Escape {}".format(f))
-            continue
-        src = os.path.join(dir, f)
-        name = rename(f, index, prefix)
-        dst = os.path.join(dir, name)
-        os.rename(src, dst)
-        index = index + 1
-    print("Finished renaming")
-
+    print("Elapsed time: %.2fs\n\n" % elapsed)
+    return cts, len_urls_unfilter
 
 def download_image_entries(entries, pool_size, limit):
     global _FINISH
@@ -104,14 +89,15 @@ def download_image_entries(entries, pool_size, limit):
         if result:
             print("#{} {} Downloaded".format(counter, url))
             counter = counter + 1
+    
+    return counter
 
 
 def get_image_entries(urls, dir):
     entries = []
     i = 0
     for url in urls:
-        name = get_file_name(url, i, "#tmp#")
-        path = os.path.join(dir, name)
+        path = dir
         entries.append((url, path))
         i = i + 1
     return entries
