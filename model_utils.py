@@ -1,5 +1,8 @@
+from cProfile import label
+import enum
 import os
 import shutil
+from cv2 import add
 from matplotlib.pyplot import draw
 import yaml
 import sys
@@ -12,6 +15,7 @@ import cv2
 import numpy as np
 import re
 import gc
+import json
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scraper'))
 
@@ -53,11 +57,13 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov5s
 	global PHOTO_DIRECTORY
 	global PHOTO_DIRNAME
 
-	for pth in [yolo_dir, 'false', PHOTO_DIRNAME , PHOTO_DIRECTORY]:
+	for pth in [yolo_dir, 'false', PHOTO_DIRNAME , PHOTO_DIRECTORY, 'finalized_dataset', 'best_model_info']:
 		if os.path.exists(pth):
 			shutil.rmtree(pth)
 			if os.path.exists(pth):
 				os.rmdir(pth)
+
+	#TODO: add code to delete any cached json files
 
 	print('Cloning yolo repo ...')
 	os.system(f"git clone {yolo_url}")
@@ -70,6 +76,11 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov5s
 	train_yolo(DIM, BATCH, EPOCHS, MODEL)
 
 def convert(size, box):
+
+	if size[0] == 0 or size[1] == 0:
+		print(f'Error: width: {size[0]} and height: {size[1]}')
+		print(box)
+
 	dw = 1./size[0]
 	dh = 1./size[1]
 	x = (box[0] + box[1])/2.0
@@ -82,66 +93,18 @@ def convert(size, box):
 	h = h*dh
 	return (x,y,w,h)
 
-def draw_bbox(image, xmin, ymin, xmax, ymax, text=None):
-	
-	"""
-	This functions draws one bounding box on an image.
-	
-	Input: Image (numpy array)
-	Output: Image with the bounding box drawn in. (numpy array)
-	
-	If there are multiple bounding boxes to draw then simply
-	run this function multiple times on the same image.
-	
-	Set text=None to only draw a bbox without
-	any text or text background.
-	E.g. set text='Balloon' to write a 
-	title above the bbox.
-	
-	xmin, ymin --> coords of the top left corner.
-	xmax, ymax --> coords of the bottom right corner.
-	
-	"""
-
-
-	w = xmax - xmin
-	h = ymax - ymin
-
-	# Draw the bounding box
-	# ......................
-	
-	start_point = (xmin, ymin) 
-	end_point = (xmax, ymax) 
-	bbox_color = (255, 0, 0) 
-	bbox_thickness = 15
-
-	image = cv2.rectangle(image, start_point, end_point, bbox_color, bbox_thickness) 
-	
-	
-	
-	# Draw the tbackground behind the text and the text
-	# .................................................
-	
-	# Only do this if text is not None.
-	if text:
-		
-		# Draw the background behind the text
-		text_bground_color = (0,0,0) # black
-		cv2.rectangle(image, (xmin, ymin-150), (xmin+w, ymin), text_bground_color, -1)
-
-		# Draw the text
-		text_color = (255, 255, 255) # white
-		font = cv2.FONT_HERSHEY_DUPLEX
-		origin = (xmin, ymin-30)
-		fontScale = 3
-		thickness = 10
-
-		image = cv2.putText(image, text, origin, font, 
-						   fontScale, text_color, thickness, cv2.LINE_AA)
-
-
-
-	return image
+def plot_one_box(x, img, color=None, label=None, line_thickness=None):
+    # Plots one bounding box on image img
+    tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
+    color = color or [random.randint(0, 255) for _ in range(3)]
+    c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
+    cv2.rectangle(img, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
+    if label:
+        tf = max(tl - 1, 1)  # font thickness
+        t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
+        c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
+        cv2.rectangle(img, c1, c2, color, -1, cv2.LINE_AA)  # filled
+        cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
 def get_exp_dir(exp_upper_dir):
 	cur_num  = -1
@@ -165,6 +128,8 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 
 	setup_and_train_yolo(input_config_yaml, DIM, 8, 100)
 	webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
+	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(input_config_yaml["class_names"]))]
+	img_num = 1
 
 	while webdl.has_next_batch():
 
@@ -194,6 +159,7 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 
 
 		num_images_taken = 0
+
 		
 		for i in range(len(img_batch)):
 
@@ -209,14 +175,14 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 			if add_to_dataset:
 
 				img_fname = os.path.split(img_batch[i])[-1]
-				img_name = img_fname.split('.')[0]
+				img_ext = img_fname.split('.')[-1]
+
 
 				#Copy the image from the photo_dir to the raw_dataset/train or raw_dataset/val directory
 				train_val = 'train' if batch_type == 'valtrain' else 'valid'
-				shutil.copyfile(img_batch[i], os.path.join(yolo_dir, 'raw_dataset', train_val, 'images', img_fname))
 
 				#Generate the label file in the raw_dataset/label/directory
-				with open(os.path.join(yolo_dir, 'raw_dataset', train_val, 'labels', f'{img_name}-label.txt'), 'w') as f: 
+				with open(os.path.join(yolo_dir, 'raw_dataset', train_val, 'labels', f'image-{img_num}.txt'), 'w') as f: 
 					
 					img = Image.open(img_batch[i])
 					img2 = cv2.imread(img_batch[i])
@@ -224,26 +190,36 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 
 					w = int(img.size[0])
 					h = int(img.size[1])
+					if w == 0 or h == 0:
+						add_to_dataset = False
+						print(f'Error: {img_batch[i]} has width {w} and height {h}')
+					else:
+						for pred in preds:
+							print(f'Yolo Predictions {pred}')
+							print(f'Width and Height: {(w, h)}')
+							print(f'Ordered for conversion: {(pred[0], pred[2], pred[1], pred[3])}')
 
-					for pred in preds:
-						x, y, w, h = convert((w, h), (pred[1], pred[3], pred[2], pred[4]))
-						print(f'{pred[5]} {x} {y} {w} {h}', file=f)
-						img2 = draw_bbox(img2, int(pred[1]), int(pred[2]), int(pred[3]), int(pred[4]), text= pred[-1])
+							x, y, w, h = convert((w, h), (pred[0], pred[2], pred[1], pred[3]))
+							print(f'{pred[5]} {x} {y} {w} {h}', file=f)
+							
+							plot_one_box(pred[0:4], img2, label=pred[-1], color=colors[pred[5]], line_thickness=3)
 
-				#Visualize image bounding boxes
-				if SAVE_BB_IMAGE:
-					if train_val == 'train' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis')):
-						os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis'))
-					elif train_val == 'valid' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis')):
-						os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis'))
 
-					cv2.imwrite(os.path.join(yolo_dir, 'raw_dataset', train_val, 'vis', f'{img_name}-vis.jpg'), img2)
-		
+						shutil.copyfile(img_batch[i], os.path.join(yolo_dir, 'raw_dataset', train_val, 'images', f'image-{img_num}.{img_ext}'))
+						if SAVE_BB_IMAGE and add_to_dataset:
+							if train_val == 'train' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis')):
+								os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis'))
+							elif train_val == 'valid' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis')):
+								os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis'))
+
+							cv2.imwrite(os.path.join(yolo_dir, 'raw_dataset', train_val, 'vis', f'image-{img_num}-vis.jpg'), img2)
+						
+						num_images_taken += 1
+
 				#Clear up any hanging memory
 				torch.cuda.empty_cache()
 				gc.collect()
 
-				num_images_taken += 1
 	
 
 
@@ -301,6 +277,7 @@ def run_object_detection_annotation(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 70
 	
 	#Homegenize all the data 
 	adl = AnnotationDataLoader(input_config_yaml['class_names'] , input_config_yaml['input_dir'])
+	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(input_config_yaml["class_names"]))]
 
 	#TODO: write data augs method
 	perform_data_augs()
@@ -365,25 +342,29 @@ def run_object_detection_annotation(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 70
 					w = int(img.size[0])
 					h = int(img.size[1])
 
-					for pred in preds:
-						x, y, w, h = convert((w, h), (pred[1], pred[3], pred[2], pred[4]))
-						print(f'{pred[5]} {x} {y} {w} {h}', file=f)
-						img2 = draw_bbox(img2, int(pred[1]), int(pred[2]), int(pred[3]), int(pred[4]), text= pred[-1])
+					if w == 0 or h == 0:
+						add_to_dataset = False
+						print(f'Error: {img_batch[i]} has width {w} and height {h}')
+
+					if add_to_dataset:
+						for pred in preds:
+							x, y, w, h = convert((w, h), (pred[1], pred[3], pred[2], pred[4]))
+							print(f'{pred[5]} {x} {y} {w} {h}', file=f)
+							plot_one_box(pred[0:4], img2, label=pred[-1], color=colors[pred[5]], line_thickness=3)
 
 				#Visualize image bounding boxes
-				if SAVE_BB_IMAGE:
+				if SAVE_BB_IMAGE and add_to_dataset:
 					if train_val == 'train' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis')):
 						os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'train', 'vis'))
 					elif train_val == 'valid' and not os.path.exists(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis')):
 						os.makedirs(os.path.join(yolo_dir, 'raw_dataset', 'valid', 'vis'))
 
-					cv2.imwrite(os.path.join(yolo_dir, 'raw_dataset', train_val, 'vis', f'{img_name}-vis.jpg'), img2)
+					cv2.imwrite(os.path.join(yolo_dir, 'raw_dataset', train_val, 'vis', f'{img_name}.jpg'), img2)
 		
 				#Clear up any hanging memory
 				torch.cuda.empty_cache()
 				gc.collect()
 
-				num_images_taken += 1
 			else:
 				unlabeled_imgs.append(img_batch[i])
 				unlabeled_labels.append(label_batch[i])
@@ -443,7 +424,7 @@ def run_object_detection_annotation(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 70
 				for pred in preds:
 					x, y, w, h = convert((w, h), (pred[1], pred[3], pred[2], pred[4]))
 					print(f'{pred[5]} {x} {y} {w} {h}', file=f)
-					img2 = draw_bbox(img2, int(pred[1]), int(pred[2]), int(pred[3]), int(pred[4]), text= pred[-1])
+					plot_one_box(pred[0:4], img2, label=pred[-1], color=colors[pred[5]], line_thickness=3)
 
 			#Visualize image bounding boxes
 			if SAVE_BB_IMAGE:
@@ -457,6 +438,52 @@ def run_object_detection_annotation(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 70
 			#Clear up any hanging memory
 			torch.cuda.empty_cache()
 			gc.collect()
+	
+
+	print('Moving all the files over to current directory ...')
+	shutil.move(os.path.join(yolo_dir, 'raw_dataset'), '.')
+	os.rename('raw_dataset', 'finalized_dataset')
+
+	print('Deleting unncessary intermediate directories ...')
+	
+	#Perform cleanup 
+	
+	#1 - Delete the temp images we collected
+	shutil.rmtree(PHOTO_DIRECTORY)
+	if os.path.exists(PHOTO_DIRECTORY):
+		os.rmdir(PHOTO_DIRECTORY)
+
+	#2 - Clean up the scraper directory by removing extraneous json files
+	[ os.remove(os.path.join('scraper', fname)) for fname in glob.glob('scraper/*.json') ]
+
+	#3 - Move the best latest model run into the current for reference
+	exp_dir = get_exp_dir(os.path.join(yolo_dir, 'runs', 'train'))
+	model_dir = os.path.join( yolo_dir, 'runs', 'train', exp_dir)
+
+	print('Moving the best model\'s directory into the current for reference')
+	shutil.move(model_dir, '.')
+	os.rename(exp_dir, 'best_model_info')
+
+	print(f'Deleting the unnecessary {yolo_dir} directory')
+	shutil.rmtree(yolo_dir)
+	if os.path.exists(yolo_dir):
+		os.rmdir(yolo_dir)
+
+	
+def generate_json_file(input_config_yaml, final_data_dir = 'finalized_dataset'):
+
+	print('')
+	out_dict = {
+		"dataset_name": final_data_dir,
+		"time_created": time.time(), 
+		"labels": input_config_yaml["class_names"],
+		"visualizations_added": os.path.exists(os.path.join(final_data_dir,'train' ,'vis')),
+		"training_images": len(os.listdir(os.path.join(final_data_dir, 'train', 'images'))),
+		"validation_images": len(os.listdir(os.path.join(final_data_dir, 'valid', 'images'))),
+	}
+
+	with open(os.path.join(final_data_dir, 'dataset-info.json'), 'w') as f:
+		json.dump(out_dict, f,indent=6)
 
 '''
 Runtime Errors to note: 
