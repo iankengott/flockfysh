@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore')
+
 from urllib.parse import quote
 import shutil
 from selenium import webdriver
@@ -13,7 +16,6 @@ BASE_URL = "https://www.shutterstock.com/search/"
 
 
 def gen_query_url(keywords, filters, extra_query_params='', page=1):
-    print("Page " + str(page))
     keywords_str = quote(keywords)
     query_url = BASE_URL + keywords_str + f'?page={page}'
     return query_url
@@ -29,7 +31,6 @@ def image_url_from_webpage(driver, max_number=10000):
     for j in range(0, len(img_container)):
         img_src = img_container[j].get("src")
         image_urls.add(img_src)
-    print(image_urls)
     return list(image_urls)
         
 
@@ -41,6 +42,7 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     #Modified from original to make headless
     chrome_options = webdriver.ChromeOptions()
     chrome_options.headless = True 
+    chrome_options.add_argument('log-level=3')
 
     if proxy is not None and proxy_type is not None:
         chrome_options.add_argument(
@@ -48,12 +50,14 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     
     #Update to handle webdriver
     driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), chrome_options=chrome_options)
-
+    print('\n\n')
     driver.set_window_size(1920, 1080)
     image_urls = list()
     i = 1
     while len(image_urls) < max_number:
-        print(len(image_urls), max_number)
+        remaining = max_number - len(image_urls)
+        if i % 3 == 0 or i == 1:
+            print(f'{remaining} images left to scrape.')
         query_url = gen_query_url(keywords, filters, extra_query_params=extra_query_params, page=i)
         driver.get(query_url)
         image_urls.extend(image_url_from_webpage(driver, max_number))
