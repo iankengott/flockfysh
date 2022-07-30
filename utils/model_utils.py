@@ -18,7 +18,7 @@ import gc
 import json
 import platform
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'scraper'))
+sys.path.append(os.path.join(os.path.dirname(__file__),'..' , 'scraper'))
 
 from scraper.WebDataLoader import AnnotationDataLoader, WebDataLoader
 from scraper.augmentations.run_augs import run_and_save_augments_on_image_sets
@@ -28,7 +28,7 @@ if sys.version_info[0] < 3:
 	raise Exception("Must be using Python 3")
 
 
-yolo_url = 'https://github.com/ultralytics/yolov5'  # '' #Uncomment to use yolov7 
+yolo_url = 'https://github.com/ultralytics/yolov5' 
 yolo_dir = yolo_url.split('/')[-1]
 PHOTO_DIRNAME = 'photos'
 PHOTO_DIRECTORY = os.path.join('scraper', PHOTO_DIRNAME)
@@ -49,14 +49,11 @@ def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov5s', WORKERS =
 	global yolo_dir
 
 	os.chdir(yolo_dir)
+
+	print(MODEL)
 	os.system(f'python train.py --img {DIM} --batch {BATCH} --workers {WORKERS} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache' )
 	os.chdir('../')
 
-def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MAX_IMAGES = 150000, MODEL = 'yolov5s'):
-	global yolo_dir
-	global yolo_url
-	global PHOTO_DIRECTORY
-	global PHOTO_DIRNAME
   
   
 def reduce_ram_usage(again):
@@ -77,7 +74,7 @@ def reduce_ram_usage(again):
 			print('Reducing RAM usage process failed. Skipping reducing RAM usage process.')
 	
 
-def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov7'):
+def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MAX_TRAIN_IMAGES , MODEL = 'yolov5s'):
 	global yolo_dir
 	global yolo_url
 	global PHOTO_DIRECTORY
@@ -98,10 +95,7 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov7'
 	print('Installing requirements ...')
 	os.system(f"pip3 install -qr {yolo_dir}/requirements.txt")
 
-
 	data_yaml_fp = setup_raw_dataset(yolo_dir, input_config_yaml)
-
-
 
 	global_cnt = 0
 	for path in ['train', 'valid']:
@@ -111,7 +105,7 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov7'
 			global_cnt += 1
 
 	#Generate image augmentations on the training images
-	run_and_save_augments_on_image_sets(os.listdir(os.path.abspath(os.path.join(yolo_dir, 'raw_dataset', 'train', 'images'))), os.listdir(os.path.abspath(os.path.join(yolo_dir, 'raw_dataset', 'train', 'labels'))), MAX_IMAGES, os.path.abspath(os.path.join(yolo_dir, 'raw_dataset')), 'train')
+	run_and_save_augments_on_image_sets(os.listdir(os.path.abspath(os.path.join(yolo_dir, 'raw_dataset', 'train', 'images'))), os.listdir(os.path.abspath(os.path.join(yolo_dir, 'raw_dataset', 'train', 'labels'))), MAX_TRAIN_IMAGES, os.path.abspath(os.path.join(yolo_dir, 'raw_dataset')), 'train')
 
 	train_yolo(DIM, BATCH, EPOCHS, MODEL)
 
@@ -155,11 +149,7 @@ def get_exp_dir(exp_upper_dir):
 			if pot_num > cur_num:
 				cur_num = pot_num
 	
-	return f'exp{cur_num}' if cur_num is not 1 else 'exp'
-
-
-def perform_data_augs():
-	pass
+	return f'exp{cur_num}' if cur_num != 1 else 'exp'
 
 
 def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 7000, IMAGES_PER_LABEL = 500, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 8, EPOCHS = 50, MAX_TRAINS = 3):
@@ -189,7 +179,10 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 			
 			#Try to move data to GPU if possible
 			device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-			model = torch.hub.load('ultralytics/yolov5', 'custom', path = model_fp)
+
+			#TODO: Path issues like this are getting tedious and annoying. Shouldn't need to do relative paths for everything
+			#TODO: We need some sort of a system that let's us shuffle global paths around efficiently
+			model = torch.hub.load(os.path.join('..', yolo_dir),  'custom', source='local', path = model_fp)
 
 			model.to(device)
 			model.eval()            
@@ -317,9 +310,6 @@ def run_object_detection_annotation(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 70
 	#Homegenize all the data 
 	adl = AnnotationDataLoader(input_config_yaml['class_names'] , input_config_yaml['input_dir'])
 	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(input_config_yaml["class_names"]))]
-
-	#TODO: write data augs method
-	perform_data_augs()
 
 	#Store unclassified data 
 	unlabeled_imgs = []
@@ -520,7 +510,7 @@ def generate_json_file(input_config_yaml, final_data_dir = 'finalized_dataset'):
 		"training_images": len(os.listdir(os.path.join(final_data_dir, 'train', 'images'))),
 		"validation_images": len(os.listdir(os.path.join(final_data_dir, 'valid', 'images'))),
 	}
-
+ 
 	with open(os.path.join(final_data_dir, 'dataset-info.json'), 'w') as f:
 		json.dump(out_dict, f,indent=6)
 

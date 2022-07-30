@@ -1,7 +1,7 @@
 import yaml
 import os
 import sys
-from model_utils import * 
+from utils.model_utils import * 
 
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")

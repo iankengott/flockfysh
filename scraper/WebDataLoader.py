@@ -23,7 +23,7 @@ class WebDataLoader:
 
 		# For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
 		# uncomment below line in final vers, commented for debugging ease
-		self.download_by_chunk(self.labels, self.MAX_IMAGES * 4, ignore_excess = False)
+		self.download_by_chunk(self.labels, ignore_excess = True)
 		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
 	
@@ -75,7 +75,7 @@ class WebDataLoader:
 							extra_query_params='')
 
 
-	def download_by_chunk(self, classnames, MAX_IMAGES, excess_factor = 2 , ignore_excess = False):
+	def download_by_chunk(self, classnames, excess_factor = 2 , ignore_excess = False):
 
 		print(f'Downloading {self.IMAGES_PER_LABEL} images for each category.')
 
@@ -102,7 +102,7 @@ class WebDataLoader:
 		# Shutterstock
 		for i in range(len(classnames)):
 			if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
-				self.download_images_from_shutterstock(classnames[i], self.IMAGES_PER_LABEL - cur_image_count[i])
+				self.download_images_from_shutterstock(classnames[i], images_per_scraper)
 				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
 
 		if not ignore_excess:
