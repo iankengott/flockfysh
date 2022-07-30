@@ -33,6 +33,9 @@ yolo_dir = yolo_url.split('/')[-1]
 PHOTO_DIRNAME = 'photos'
 PHOTO_DIRECTORY = os.path.join('scraper', PHOTO_DIRNAME)
 
+sys.path.append(os.path.join(os.path.dirname(__file__),'..' , yolo_dir))
+
+
 def setup_raw_dataset(yolo_dir, input_config_yaml):
 
 	shutil.copytree(os.path.join(input_config_yaml["input_dir"], 'train'), os.path.join(yolo_dir, 'raw_dataset', 'train'))
@@ -145,13 +148,17 @@ def plot_one_box(x, img, color=None, label=None, line_thickness=None):
 
 def get_exp_dir(exp_upper_dir):
 	cur_num  = -1
+
 	for folder in os.listdir(exp_upper_dir):
 		if os.path.exists(os.path.join(exp_upper_dir, folder, 'weights', 'best.pt')):
 			pot_num = (1 if folder == 'exp' else int(re.findall(r'\d+$', folder)[-1]))
 
 			if pot_num > cur_num:
 				cur_num = pot_num
-	
+
+	if cur_num == -1:
+		raise Exception("No yolo directory found")
+
 	return f'exp{cur_num}' if cur_num != 1 else 'exp'
 
 
@@ -163,6 +170,7 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 	#TODO: figure out a way to handle params without so much overflow
 	MAX_TRAIN_IMAGES = IMAGES_PER_LABEL * len(input_config_yaml["class_names"])
 
+	#Temp comment out
 	setup_and_train_yolo(input_config_yaml, DIM, 8, 100, MAX_TRAIN_IMAGES)
 	webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, IMAGES_PER_LABEL, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
 	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(input_config_yaml["class_names"]))]
@@ -173,6 +181,8 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 		#Load the model
 		model_fp = os.path.join( yolo_dir, 'runs', 'train', get_exp_dir(os.path.join(yolo_dir, 'runs', 'train')), 'weights', 'best.pt' )
 		
+		print(model_fp)
+
 		batch_type = webdl.get_next_batch_type()
 		
 		img_batch, label_batch = webdl.get_next_batch() #Returns all image urls for the current batch into img_batch
@@ -311,9 +321,6 @@ def run_object_detection_annotation(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 70
 	#Homegenize all the data 
 	adl = AnnotationDataLoader(input_config_yaml['class_names'] , input_config_yaml['input_dir'])
 	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(input_config_yaml["class_names"]))]
-
-	#TODO: write data augs method
-	perform_data_augs()
 
 	#Store unclassified data 
 	unlabeled_imgs = []
