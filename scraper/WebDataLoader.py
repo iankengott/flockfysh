@@ -10,9 +10,10 @@ from math import ceil
 
 
 class WebDataLoader:
-	def __init__(self, MAX_IMAGES, MAX_TRAIN_IMAGES, labels, dataset_dir, PHOTOS_DIR = 'photos'):
+	def __init__(self, MAX_IMAGES, IMAGES_PER_LABEL, MAX_TRAIN_IMAGES, labels, dataset_dir, PHOTOS_DIR = 'photos'):
 		self.MAX_IMAGES = MAX_IMAGES
 		self.labels = labels
+		self.IMAGES_PER_LABEL = IMAGES_PER_LABEL
 		self.MAX_TRAIN_IMAGES = MAX_TRAIN_IMAGES
 		self.PHOTOS_DIR = PHOTOS_DIR
 		self.OUTPUT_DIR = PHOTOS_DIR
@@ -74,38 +75,39 @@ class WebDataLoader:
 							extra_query_params='')
 
 
-	def download_by_chunk(self, classnames, MAX_IMAGES, ignore_excess = False):
+	def download_by_chunk(self, classnames, MAX_IMAGES, excess_factor = 2 , ignore_excess = False):
 
-		images_per_label = MAX_IMAGES // len(classnames)
-		print(f'Downloading {images_per_label} images for each category.')
+		print(f'Downloading {self.IMAGES_PER_LABEL} images for each category.')
 
 		# shutterstock, yahoo, google 
 		num_scrapers = 3 
 
 		cur_image_count = [0] * len(classnames)
-		images_per_scraper = images_per_label // num_scrapers + 1
+
+		#Overshoot images on purpose so that we don't have a shortage
+		images_per_scraper = (self.IMAGES_PER_LABEL * excess_factor) // num_scrapers + 1
 
 		# Yahoo
 		for i in range(len(classnames)):
-			if cur_image_count[i] < images_per_label:
+			if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
 				self.download_images_from_yahoo(classnames[i], images_per_scraper)
 				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
 		
 		# Google
 		for i in range(len(classnames)):
-			if cur_image_count[i] < images_per_label:
+			if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
 				self.download_images_from_google(classnames[i], images_per_scraper)
 				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
 
 		# Shutterstock
 		for i in range(len(classnames)):
-			if cur_image_count[i] < images_per_label:
-				self.download_images_from_shutterstock(classnames[i], images_per_label - cur_image_count[i])
+			if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
+				self.download_images_from_shutterstock(classnames[i], self.IMAGES_PER_LABEL - cur_image_count[i])
 				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
 
 		if not ignore_excess:
 			print('Excess has been specified to be removed, set ignore_excess to be True if the extra images is wanted')
-			[os.remove(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i], f))) for f in os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i])))[images_per_label:] ]
+			[os.remove(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i], f))) for f in os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i])))[self.IMAGES_PER_LABEL:] ]
 
 	def batch_images(self, classnames, starting_img_per_batch = 50):
 		img_batches = []
@@ -174,11 +176,18 @@ class WebDataLoader:
 
 		self.batch_ptr += 1
 
-		if self.MAX_IMAGES - self.current_num_images < len(self.img_batches[self.batch_ptr - 1]):
-			imgs = self.img_batches[self.batch_ptr - 1][:(self.MAX_IMAGES - self.current_num_images)]
-			lbls = self.label_batches[self.batch_ptr - 1][:(self.MAX_IMAGES - self.current_num_images)]
+
+		if self.get_total_ds_imgs() + len(self.img_batches[self.batch_ptr - 1]) > self.MAX_IMAGES:
+			imgs = self.img_batches[self.batch_ptr - 1][:(self.MAX_IMAGES - self.get_total_ds_imgs())]
+			lbls = self.label_batches[self.batch_ptr - 1][:(self.MAX_IMAGES - self.get_total_ds_imgs())]
 
 			self.clear_batches()
+			return (imgs, lbls)
+		
+		elif self.get_total_ds_imgs() + len(self.img_batches[self.batch_ptr - 1]) > self.MAX_TRAIN_IMAGES and self.get_next_batch_type() == "valtrain":
+			imgs = self.img_batches[self.batch_ptr - 1][:(self.MAX_TRAIN_IMAGES - self.get_total_ds_imgs())]
+			lbls = self.label_batches[self.batch_ptr - 1][:(self.MAX_TRAIN_IMAGES - self.get_total_ds_imgs())]
+			
 			return (imgs, lbls)
 
 		return (self.img_batches[self.batch_ptr - 1], self.label_batches[self.batch_ptr - 1])

@@ -2,6 +2,7 @@ from cProfile import label
 import enum
 import os
 import shutil
+from tkinter.tix import MAX
 from cv2 import add
 from matplotlib.pyplot import draw
 import yaml
@@ -20,6 +21,7 @@ import json
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scraper'))
 
 from scraper.WebDataLoader import AnnotationDataLoader, WebDataLoader
+from scraper.augmentations.run_augs import run_and_save_augments_on_image_sets
 
 
 if sys.version_info[0] < 3:
@@ -43,14 +45,14 @@ def setup_raw_dataset(yolo_dir, input_config_yaml):
 
 	return os.path.join(yolo_dir, 'raw_dataset', 'data.yaml')
 	
-def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov5s', WORKERS = 8, use_default_augs = False):
+def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov5s', WORKERS = 8):
 	global yolo_dir
 
 	os.chdir(yolo_dir)
-	os.system(f'python train.py --img {DIM} --batch {BATCH} --workers {WORKERS} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache {"--augment" if use_default_augs else ""}' )
+	os.system(f'python train.py --img {DIM} --batch {BATCH} --workers {WORKERS} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache' )
 	os.chdir('../')
 
-def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov5s'):
+def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MAX_IMAGES = 150000, MODEL = 'yolov5s'):
 	global yolo_dir
 	global yolo_url
 	global PHOTO_DIRECTORY
@@ -74,6 +76,8 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov5s
 
 	data_yaml_fp = setup_raw_dataset(yolo_dir, input_config_yaml)
 
+
+
 	global_cnt = 0
 	for path in ['train', 'valid']:
 		for pth in os.listdir(os.path.join(yolo_dir, 'raw_dataset', path, 'images')):
@@ -81,8 +85,10 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov5s
 			os.rename(os.path.join(yolo_dir, 'raw_dataset', path, 'labels', f'{pth[:pth.rfind(".")]}.txt'), os.path.join(yolo_dir, 'raw_dataset' , path, 'labels', f'image-{global_cnt + 1}.txt'))
 			global_cnt += 1
 
+	#Generate image augmentations on the training images
+	run_and_save_augments_on_image_sets(os.listdir(os.path.abspath(os.path.join(yolo_dir, 'raw_dataset', 'train', 'images'))), os.listdir(os.path.abspath(os.path.join(yolo_dir, 'raw_dataset', 'train', 'labels'))), MAX_IMAGES, os.path.abspath(os.path.join(yolo_dir, 'raw_dataset')), 'train')
 
-	train_yolo(DIM, BATCH, EPOCHS, MODEL, use_default_augs=True)
+	train_yolo(DIM, BATCH, EPOCHS, MODEL)
 
 def convert(size, box):
 
@@ -130,16 +136,16 @@ def perform_data_augs():
 	pass
 
 
-def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 7000, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 8, EPOCHS = 50, MAX_TRAINS = 3):
+def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 7000, IMAGES_PER_LABEL = 500, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 8, EPOCHS = 50, MAX_TRAINS = 3):
 	global yolo_dir
 	global PHOTO_DIRNAME
 	global PHOTO_DIRECTORY
 
-	#Reformat the image names
+	#TODO: figure out a way to handle params without so much overflow
+	MAX_TRAIN_IMAGES = IMAGES_PER_LABEL * len(input_config_yaml["class_names"])
 
-
-	setup_and_train_yolo(input_config_yaml, DIM, 8, 100)
-	webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
+	setup_and_train_yolo(input_config_yaml, DIM, 8, 100, MAX_TRAIN_IMAGES)
+	webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, IMAGES_PER_LABEL, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
 	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(input_config_yaml["class_names"]))]
 
 	while webdl.has_next_batch():
