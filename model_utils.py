@@ -2,7 +2,7 @@ from cProfile import label
 import enum
 import os
 import shutil
-from cv2 import add
+from cv2 import add, reduce
 from matplotlib.pyplot import draw
 import yaml
 import sys
@@ -16,6 +16,7 @@ import numpy as np
 import re
 import gc
 import json
+import platform
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scraper'))
 
@@ -55,6 +56,31 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov5s
 	global yolo_url
 	global PHOTO_DIRECTORY
 	global PHOTO_DIRNAME
+  
+  
+def reduce_ram_usage(again):
+    if not again:
+        return
+    
+    venv_path = str(input('Enter the relative path to your virtual environment [ex: ..\\venv or \\venv]: '))
+    dll_dir = os.path.abspath(os.path.join(venv_path, 'Lib\\site-packages\\torch\\lib'))
+
+    if not os.path.exists(dll_dir):
+        again = str(input('Path does not exist or torch is not installed. Try again? [Y/n]: ')).upper() == 'Y'
+        reduce_ram_usage(again)
+    else:
+        dll_files = os.path.join(dll_dir, '*.dll')
+        try:
+            os.system(f'python ram_reducer.py --input="{dll_files}"')
+        except:
+            print('Reducing RAM usage process failed. Skipping reducing RAM usage process.')
+    
+
+def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov7'):
+    global yolo_dir
+    global yolo_url
+    global PHOTO_DIRECTORY
+    global PHOTO_DIRNAME
 
 	for pth in [yolo_dir, 'false', PHOTO_DIRNAME , PHOTO_DIRECTORY, 'finalized_dataset', 'best_model_info']:
 		if os.path.exists(pth):
@@ -125,6 +151,7 @@ def get_exp_dir(exp_upper_dir):
 				cur_num = pot_num
 	
 	return f'exp{cur_num}' if cur_num is not 1 else 'exp'
+
 
 def perform_data_augs():
 	pass
