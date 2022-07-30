@@ -2,8 +2,7 @@ from cProfile import label
 import enum
 import os
 import shutil
-from tkinter.tix import MAX
-from cv2 import add
+from cv2 import add, reduce
 from matplotlib.pyplot import draw
 import yaml
 import sys
@@ -17,6 +16,7 @@ import numpy as np
 import re
 import gc
 import json
+import platform
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scraper'))
 
@@ -53,6 +53,31 @@ def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov5s', WORKERS =
 	os.chdir('../')
 
 def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MAX_IMAGES = 150000, MODEL = 'yolov5s'):
+	global yolo_dir
+	global yolo_url
+	global PHOTO_DIRECTORY
+	global PHOTO_DIRNAME
+  
+  
+def reduce_ram_usage(again):
+	if not again:
+		return
+	
+	venv_path = str(input('Enter the relative path to your virtual environment [ex: ..\\venv or \\venv]: '))
+	dll_dir = os.path.abspath(os.path.join(venv_path, 'Lib\\site-packages\\torch\\lib'))
+
+	if not os.path.exists(dll_dir):
+		again = str(input('Path does not exist or torch is not installed. Try again? [Y/n]: ')).upper() == 'Y'
+		reduce_ram_usage(again)
+	else:
+		dll_files = os.path.join(dll_dir, '*.dll')
+		try:
+			os.system(f'python ram_reducer.py --input="{dll_files}"')
+		except:
+			print('Reducing RAM usage process failed. Skipping reducing RAM usage process.')
+	
+
+def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov7'):
 	global yolo_dir
 	global yolo_url
 	global PHOTO_DIRECTORY
@@ -109,17 +134,17 @@ def convert(size, box):
 	return (x,y,w,h)
 
 def plot_one_box(x, img, color=None, label=None, line_thickness=None):
-    # Plots one bounding box on image img
-    tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
-    color = color or [random.randint(0, 255) for _ in range(3)]
-    c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
-    cv2.rectangle(img, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
-    if label:
-        tf = max(tl - 1, 1)  # font thickness
-        t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
-        c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
-        cv2.rectangle(img, c1, c2, color, -1, cv2.LINE_AA)  # filled
-        cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
+	# Plots one bounding box on image img
+	tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
+	color = color or [random.randint(0, 255) for _ in range(3)]
+	c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
+	cv2.rectangle(img, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
+	if label:
+		tf = max(tl - 1, 1)  # font thickness
+		t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
+		c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
+		cv2.rectangle(img, c1, c2, color, -1, cv2.LINE_AA)  # filled
+		cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
 def get_exp_dir(exp_upper_dir):
 	cur_num  = -1
@@ -131,6 +156,7 @@ def get_exp_dir(exp_upper_dir):
 				cur_num = pot_num
 	
 	return f'exp{cur_num}' if cur_num is not 1 else 'exp'
+
 
 def perform_data_augs():
 	pass

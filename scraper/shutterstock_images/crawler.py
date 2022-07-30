@@ -12,6 +12,9 @@ from bs4 import BeautifulSoup
 import time
 import json
 
+import logging
+logging.getLogger('WDM').setLevel(logging.NOTSET)
+
 BASE_URL = "https://www.shutterstock.com/search/"
 
 
@@ -42,7 +45,8 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     #Modified from original to make headless
     chrome_options = webdriver.ChromeOptions()
     chrome_options.headless = True 
-    chrome_options.add_argument('log-level=3')
+    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+
 
     if proxy is not None and proxy_type is not None:
         chrome_options.add_argument(

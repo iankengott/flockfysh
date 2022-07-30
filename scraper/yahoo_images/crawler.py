@@ -9,6 +9,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 import json
 
+import logging
+logging.getLogger('WDM').setLevel(logging.NOTSET)
+
 BASE_URL = "https://images.search.yahoo.com/search/images;_ylt=Awr488YjaOBiVSwDNS2LuLkF;_ylc=X1MDOTYwNTc0ODMEX3IDMgRmcgMEZ3ByaWQDMDNHaEZ3c0VRUEMxZkxyYU9HdjlOQQRuX3N1Z2cDMTAEb3JpZ2luA2ltYWdlcy5zZWFyY2gueWFob28uY29tBHBvcwMwBHBxc3RyAwRwcXN0cmwDBHFzdHJsAzQEcXVlcnkDY29kZQR0X3N0bXADMTY1ODg3Mzg5Mw--?fr2=sb-top-images.search"
 
 
@@ -53,7 +56,7 @@ def crawl_image_urls(keywords, filters, max_number=10000, proxy=None, proxy_type
     #Modified from original to make headless
     chrome_options = webdriver.ChromeOptions()
     chrome_options.headless = True 
-    chrome_options.add_argument('log-level=3')
+    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
     if proxy is not None and proxy_type is not None:
         chrome_options.add_argument(
