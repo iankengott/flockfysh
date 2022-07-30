@@ -54,8 +54,7 @@ def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov5s', WORKERS =
 	os.system(f'python train.py --img {DIM} --batch {BATCH} --workers {WORKERS} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache' )
 	os.chdir('../')
 
-  
-  
+
 def reduce_ram_usage(again):
 	if not again:
 		return
@@ -95,7 +94,9 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MAX_TRAIN_IMAGES
 	print('Installing requirements ...')
 	os.system(f"pip3 install -qr {yolo_dir}/requirements.txt")
 
+
 	data_yaml_fp = setup_raw_dataset(yolo_dir, input_config_yaml)
+
 
 	global_cnt = 0
 	for path in ['train', 'valid']:
@@ -104,10 +105,12 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MAX_TRAIN_IMAGES
 			os.rename(os.path.join(yolo_dir, 'raw_dataset', path, 'labels', f'{pth[:pth.rfind(".")]}.txt'), os.path.join(yolo_dir, 'raw_dataset' , path, 'labels', f'image-{global_cnt + 1}.txt'))
 			global_cnt += 1
 
+
 	#Generate image augmentations on the training images
 	run_and_save_augments_on_image_sets(os.listdir(os.path.abspath(os.path.join(yolo_dir, 'raw_dataset', 'train', 'images'))), os.listdir(os.path.abspath(os.path.join(yolo_dir, 'raw_dataset', 'train', 'labels'))), MAX_TRAIN_IMAGES, os.path.abspath(os.path.join(yolo_dir, 'raw_dataset')), 'train')
 
 	train_yolo(DIM, BATCH, EPOCHS, MODEL)
+
 
 def convert(size, box):
 
@@ -164,6 +167,7 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 	webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, IMAGES_PER_LABEL, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
 	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(input_config_yaml["class_names"]))]
 
+
 	while webdl.has_next_batch():
 
 		#Load the model
@@ -179,10 +183,7 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 			
 			#Try to move data to GPU if possible
 			device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-			#TODO: Path issues like this are getting tedious and annoying. Shouldn't need to do relative paths for everything
-			#TODO: We need some sort of a system that let's us shuffle global paths around efficiently
-			model = torch.hub.load(os.path.join('..', yolo_dir),  'custom', source='local', path = model_fp)
+			model = torch.hub.load('ultralytics/yolov5', 'custom', path = model_fp)
 
 			model.to(device)
 			model.eval()            
@@ -310,6 +311,9 @@ def run_object_detection_annotation(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 70
 	#Homegenize all the data 
 	adl = AnnotationDataLoader(input_config_yaml['class_names'] , input_config_yaml['input_dir'])
 	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(input_config_yaml["class_names"]))]
+
+	#TODO: write data augs method
+	perform_data_augs()
 
 	#Store unclassified data 
 	unlabeled_imgs = []

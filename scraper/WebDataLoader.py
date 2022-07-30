@@ -3,9 +3,6 @@ from argparse import Namespace
 from yahoo_images import yahoo
 from shutterstock_images import shutterstock
 from google_images import google
-import numpy as np
-import cv2
-from PIL import Image
 from math import ceil
 
 
