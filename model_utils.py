@@ -1,5 +1,6 @@
 import os
 import shutil
+from cv2 import reduce
 from matplotlib.pyplot import draw
 import yaml
 import sys
@@ -47,6 +48,24 @@ def train_yolo(DIM = 416, BATCH = 32, EPOCHS = 500, MODEL = 'yolov7', WORKERS = 
 #    os.system(f'python3 train.py --img {DIM} --batch {BATCH} --epochs {EPOCHS} --data {os.path.abspath("raw_dataset")}/data.yaml --weights {MODEL}.pt --cache')
     os.chdir('../')
 
+def reduce_ram_usage(again):
+    if not again:
+        return
+    
+    venv_path = str(input('Enter the relative path to your virtual environment [ex: ..\\venv or \\venv]: '))
+    dll_dir = os.path.abspath(os.path.join(venv_path, 'Lib\\site-packages\\torch\\lib'))
+
+    if not os.path.exists(dll_dir):
+        again = str(input('Path does not exist or torch is not installed. Try again? [Y/n]: ')).upper() == 'Y'
+        reduce_ram_usage(again)
+    else:
+        dll_files = os.path.join(dll_dir, '*.dll')
+        try:
+            os.system(f'python ram_reducer.py --input="{dll_files}"')
+        except:
+            print('Reducing RAM usage process failed. Skipping reducing RAM usage process.')
+    
+
 def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov7'):
     global yolo_dir
     global yolo_url
@@ -58,24 +77,6 @@ def setup_and_train_yolo(input_config_yaml, DIM, BATCH, EPOCHS, MODEL = 'yolov7'
             shutil.rmtree(pth)
             if os.path.exists(pth):
                 os.rmdir(pth)
-
-    print('Reducing RAM usage ...')
-    ram = str(input('Would you like RAM usage to be decreased? [Y/n]: ')).upper()
-    if ram == 'Y':
-        again = True
-        while again:
-            venv_path = str(input('Enter the relative path to your virtual environment [ex: ..\\venv or \\venv]: '))
-            dll_dir = os.path.abspath(os.path.join(venv_path, 'Lib\\site-packages\\torch\\lib'))
-            print(dll_dir)
-            if not os.path.exists(dll_dir):
-                again = str(input('Path does not exist or torch is not installed. Try again? [Y/n]: ')).upper() == 'Y'
-                continue
-            again = False
-            dll_files = os.path.join(dll_dir, '*.dll')
-            try:
-                os.system(f'python ram_reducer.py --input="{dll_files}"')
-            except:
-                print('Reducing RAM usage process failed. Skipping reducing RAM usage process.')
 
     print('Cloning yolo repo ...')
     os.system(f"git clone {yolo_url}")
@@ -177,6 +178,7 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
     global PHOTO_DIRNAME
     global PHOTO_DIRECTORY
 
+    reduce_ram_usage(str(input('Would you like RAM usage to be decreased? [Y/n]: ')).upper() == 'Y')
     setup_and_train_yolo(input_config_yaml, DIM, 32, 100)
     webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
 
