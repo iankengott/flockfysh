@@ -13,6 +13,7 @@ import cv2
 import numpy as np
 import re
 import gc
+import platform
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scraper'))
 
@@ -178,7 +179,8 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
     global PHOTO_DIRNAME
     global PHOTO_DIRECTORY
 
-    reduce_ram_usage(str(input('Would you like RAM usage to be decreased (Intended for Windowes instances)? [Y/n]: ')).upper() == 'Y')
+    if platform.system() == 'Windows':
+        reduce_ram_usage(str(input('Would you like RAM usage to be decreased? [Y/n]: ')).upper() == 'Y')
     setup_and_train_yolo(input_config_yaml, DIM, 32, 100)
     webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
 
