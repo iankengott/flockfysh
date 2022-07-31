@@ -153,7 +153,7 @@ class WebDataLoader:
 		return self.get_total_ds_imgs() - self.starting_num_images
 
 	def has_next_batch(self):
-		return len(self.img_batches) > 0 and self.batch_ptr < len(self.img_batches)
+		return len(self.img_batches) > 0 and self.batch_ptr < len(self.img_batches) and self.get_total_ds_imgs() < self.MAX_IMAGES
 	
 	def get_next_batch_type(self):
 		if not self.has_next_batch():
@@ -209,7 +209,7 @@ class AnnotationDataLoader:
 		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
 	def has_next_batch(self):
-		return len(self.img_batches) > 0 and self.batch_ptr < len(self.img_batches)
+		return len(self.img_batches) > 0 and self.batch_ptr < len(self.img_batches) 
 
 	def get_next_batch_type(self):
 		if not self.has_next_batch():
