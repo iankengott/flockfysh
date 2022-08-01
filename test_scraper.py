@@ -2,8 +2,7 @@
 import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.join( '..')))
-sys.path.append(os.path.abspath(os.path.join( '..', 'scraper')))
+sys.path.append(os.path.abspath(os.path.join('scraper')))
 
 print(sys.path)
 
@@ -15,4 +14,4 @@ IMAGES_PER_LABEL = 500 #TOTAL MAXIMIM IMAGES = IMAGES PER LABEL * (number of lab
 MAX_TRAIN_IMAGES = 1900
 
 
-webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, IMAGES_PER_LABEL, MAX_TRAIN_IMAGES, ['Bed Bug', 'Fire ant', 'Tick', 'Wasp'], os.path.abspath(os.path.join('..', 'robo')), os.path.abspath(os.path.join('..', 'scraper', 'photos')))
+webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, IMAGES_PER_LABEL, MAX_TRAIN_IMAGES, ['Bed Bug', 'Fire ant', 'Tick', 'Wasp'], os.path.abspath(os.path.join('robo')), os.path.abspath(os.path.join('scraper', 'photos')))
