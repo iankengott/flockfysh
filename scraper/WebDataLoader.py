@@ -4,6 +4,7 @@ from yahoo_images import yahoo
 from shutterstock_images import shutterstock
 from google_images import google
 from math import ceil
+from remove_dupes import remove
 
 
 class WebDataLoader:
@@ -105,6 +106,11 @@ class WebDataLoader:
 		if not ignore_excess:
 			print('Excess has been specified to be removed, set ignore_excess to be True if the extra images is wanted')
 			[os.remove(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i], f))) for f in os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i])))[self.IMAGES_PER_LABEL:] ]
+
+		print('Removing duplicate images ...')
+		for classname in classnames:
+			dupes = remove(os.path.abspath(os.path.join('../scraper', f'photos/{classname}')))
+			print(f'{dupes} image(s) have been removed from photos/{classname}.')
 
 	def batch_images(self, classnames, starting_img_per_batch = 50):
 		img_batches = []

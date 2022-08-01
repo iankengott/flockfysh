@@ -71,7 +71,7 @@ def reduce_ram_usage(again):
 	else:
 		dll_files = os.path.join(dll_dir, '*.dll')
 		try:
-			os.system(f'python ram_reducer.py --input="{dll_files}"')
+			os.system(f'python .\\utilities\\ram_reducer.py --input="{dll_files}"')
 		except:
 			print('Reducing RAM usage process failed. Skipping reducing RAM usage process.')
 	
@@ -170,6 +170,10 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 	#TODO: figure out a way to handle params without so much overflow
 	MAX_TRAIN_IMAGES = IMAGES_PER_LABEL * len(input_config_yaml["class_names"])
 
+
+	if platform.system() == 'Windows':
+		reduce_ram_usage(str(input('Would you like RAM usage to be decreased? [Y/n]: ')).upper() == 'Y')
+	
 	#Temp comment out
 	setup_and_train_yolo(input_config_yaml, DIM, 8, 100, MAX_TRAIN_IMAGES)
 	webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, IMAGES_PER_LABEL, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
