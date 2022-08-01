@@ -71,7 +71,7 @@ def reduce_ram_usage(again):
 	else:
 		dll_files = os.path.join(dll_dir, '*.dll')
 		try:
-			os.system(f'python ram_reducer.py --input="{dll_files}"')
+			os.system(f'python .\\utilities\\ram_reducer.py --input="{dll_files}"')
 		except:
 			print('Reducing RAM usage process failed. Skipping reducing RAM usage process.')
 	

@@ -109,8 +109,8 @@ class WebDataLoader:
 
 		print('Removing duplicate images ...')
 		for classname in classnames:
-			remove(f'images/{classname}', 1)
-			print('Duplicate images removed.\n')
+			dupes = remove(os.path.abspath(os.path.join('scraper', f'photos/{classname}')))
+			print(f'{dupes} image(s) have been removed.')
 
 	def batch_images(self, classnames, starting_img_per_batch = 50):
 		img_batches = []

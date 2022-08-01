@@ -13,6 +13,7 @@ def dhash(image, hashSize=8):
 
 
 def remove(dataset='', remove=1):
+    total_removed = 0
     imagePaths = list(paths.list_images(dataset))
     hashes = {}
     for imagePath in imagePaths:
@@ -40,3 +41,6 @@ def remove(dataset='', remove=1):
             else:
                 for p in hashedPaths[1:]:
                     os.remove(p)
+                total_removed += len(hashedPaths[1:])
+    return total_removed
+
