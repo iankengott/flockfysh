@@ -2,10 +2,17 @@
 import sys
 import os
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'scraper'))
+sys.path.append(os.path.abspath(os.path.join( '..')))
+sys.path.append(os.path.abspath(os.path.join( '..', 'scraper')))
 
-from run import parse_params, get_input_file
+print(sys.path)
+
 from scraper.WebDataLoader import WebDataLoader
 
-input_config_yaml = parse_params(get_input_file())
-webdl = WebDataLoader(1000, 900, input_config_yaml['class_names'], input_config_yaml['input_dir'], 'photos')
+#Toggle these variables to test scraping
+TOTAL_MAXIMUM_IMAGES = 2000
+IMAGES_PER_LABEL = 500 #TOTAL MAXIMIM IMAGES = IMAGES PER LABEL * (number of labels). If TOTAL MAXIMUM IMAGES != [IMAGES PER LABEL * (number of labels)], IT IS OVERRIDDEN WITH IMAGES PER LABEL * (number of labels)
+MAX_TRAIN_IMAGES = 1900
+
+
+webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, IMAGES_PER_LABEL, MAX_TRAIN_IMAGES, ['Bed Bug', 'Fire ant', 'Tick', 'Wasp'], os.path.abspath(os.path.join('..', 'robo')), os.path.abspath(os.path.join('..', 'scraper', 'photos')))
