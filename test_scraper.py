@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join('scraper')))
 
 print(sys.path)
 
-from scraper.WebDataLoader import WebDataLoader
+from scraper.DataLoaders.WebDataLoader import WebDataLoader
 
 #Toggle these variables to test scraping
 TOTAL_MAXIMUM_IMAGES = 2000

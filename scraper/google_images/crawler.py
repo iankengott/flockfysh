@@ -11,7 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 import json
 
-from google_images.config import (GOOGLE_SUGGEST_CLASS, GOOGLE_THUBNAILS_XPATH,
+from .config import (GOOGLE_SUGGEST_CLASS, GOOGLE_THUBNAILS_XPATH,
                              GOOGLE_IMAGE_FULLSIZE_XPATH, GOOGLE_IMAGE_LOADING_BAR_XPATH)
 
 import logging

@@ -1,7 +1,7 @@
 import yaml
 import os
 import sys
-from utilities.model_utils import * 
+from utilities.pipelines.training_webscrape_loop import * 
 
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
