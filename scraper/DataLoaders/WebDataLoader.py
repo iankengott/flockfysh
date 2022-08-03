@@ -107,7 +107,7 @@ class WebDataLoader:
 		for i in range(len(classnames)):
 			for query in queries[classnames[i]]:
 				if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
-					print(f'Downloading images for query: {query}')
+					print(f'Downloading images for query: {query}') 
 					self.download_images_from_shutterstock(classnames[i], query, images_per_scraper)
 					cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
 				else:
