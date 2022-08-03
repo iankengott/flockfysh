@@ -33,7 +33,7 @@ def run_training_object_detection_webscrape_loop(**args):
 	
 	#Base train on images
 	setup_and_train_yolo(**args)
-	webdl = WebDataLoader(args['total-maximum-images'], args['images-per-label'], args['max-train-images'], args['class-names'], args['input-dir'], PHOTO_DIRNAME)
+	webdl = WebDataLoader(args['total-maximum-images'], args['images-per-label'], args['max-train-images'], args['class-names'], args['class-search-queries'], args['input-dir'], PHOTO_DIRNAME)
 	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(args["class-names"]))]
 
 
