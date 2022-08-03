@@ -1,0 +1,27 @@
+class-names: 
+  - mandatory: True
+input-dir:
+  - mandatory: True
+train-workers:
+  - mandatory: True
+imgs-per-label:
+  - mandatory: True
+total-maximum-images:
+  - mandatory: True
+
+#TODO: need to add classname-searches params to specifically let user specify specific queries
+
+#For any mandatory image (needs the user to specify, just add the mandatory attribute, else write actual value)
+image-dimension: 416
+train-batch: 32
+train-epochs: 100
+yolo-model: 'yolov5s'
+min-conf-threshold: 0.4
+max-trains: 3
+save-bb-image: False
+reduce-ram-usage: False
+
+
+#Not very useful (overridden by imgs-per-label), considering integrating 
+max-train-images: 5000
+

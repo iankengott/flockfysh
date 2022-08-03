@@ -20,19 +20,21 @@ from utilities.optimizers.ram_reducer import reduce_ram_usage
 from scraper.DataLoaders.WebDataLoader import WebDataLoader
 from config import YOLO_DIR, PHOTO_DIRECTORY, PHOTO_DIRNAME
 
-def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMUM_IMAGES = 7000, IMAGES_PER_LABEL = 500, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 8, EPOCHS = 50, MAX_TRAINS = 3):
+def run_training_object_detection_webscrape_loop(**args)
+	
+	#class_names,input_dir,TOTAL_MAXIMUM_IMAGES = 7000, IMAGES_PER_LABEL = 500, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 8, EPOCHS = 50, MAX_TRAINS = 3):
 
 	#TODO: figure out a way to handle params without so much overflow
-	MAX_TRAIN_IMAGES = IMAGES_PER_LABEL * len(input_config_yaml["class_names"])
+	MAX_TRAIN_IMAGES = args['imgs-per-label'] * len(args['class-names'])
 
 
 	if platform.system() == 'Windows':
-		reduce_ram_usage(str(input('Would you like RAM usage to be decreased? [Y/n]: ')).upper() == 'Y')
+		reduce_ram_usage(args['reduce-ram-usage'])
 	
-	#Temp comment out
-	setup_and_train_yolo(input_config_yaml, DIM, 8, 100, MAX_TRAIN_IMAGES)
-	webdl = WebDataLoader(TOTAL_MAXIMUM_IMAGES, IMAGES_PER_LABEL, MAX_TRAIN_IMAGES, input_config_yaml['class_names'], input_config_yaml['input_dir'], PHOTO_DIRNAME)
-	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(input_config_yaml["class_names"]))]
+	#Base train on images
+	setup_and_train_yolo(args, args['image-dimension'], args['train-batch'] , 100, args['max-train-images'])
+	webdl = WebDataLoader(args['total-maximum-images'], args['images-per-label'], args['max-train-images'], args['class-names'], args['input-dir'], PHOTO_DIRNAME)
+	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(args["class-names"]))]
 
 
 	while webdl.has_next_batch():
@@ -74,7 +76,7 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 			preds = results.pandas().xyxy[i].values.tolist()
 
 			for pred in preds:
-				if pred[4] >= CONFIDENCE_THRESHOLD and pred[-1] == label_batch[i]:        
+				if pred[4] >= args['min-conf-threshold'] and pred[-1] == label_batch[i]:        
 					add_to_dataset = True
 					break
 
@@ -108,7 +110,7 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 
 
 						shutil.copyfile(img_batch[i], os.path.join(YOLO_DIR, 'raw_dataset', train_val, 'images', f'image-{webdl.get_total_ds_imgs() + 1}.{img_ext}'))
-						if SAVE_BB_IMAGE and add_to_dataset:
+						if args['save-bb-image'] and add_to_dataset:
 							if train_val == 'train' and not os.path.exists(os.path.join(YOLO_DIR, 'raw_dataset', 'train', 'vis')):
 								os.makedirs(os.path.join(YOLO_DIR, 'raw_dataset', 'train', 'vis'))
 							elif train_val == 'valid' and not os.path.exists(os.path.join(YOLO_DIR, 'raw_dataset', 'valid', 'vis')):
@@ -129,10 +131,10 @@ def run_training_object_detection_webscrape_loop(input_config_yaml, TOTAL_MAXIMU
 		webdl.update_number_images_taken(num_images_taken)
 
 		#Train the model again with the updated dirs
-		if batch_type == 'valtrain' and MAX_TRAINS > 0:
+		if batch_type == 'valtrain' and args['max-trains'] > 0:
 			print('Training new model! More data, better model! :)')
-			MAX_TRAINS -= 1
-			train_yolo(DIM, BATCH, EPOCHS)
+			args['max-trains'] -= 1
+			train_yolo(args['image-dimension'], args['train-batch'], args['train-epochs'])
 			
 			#Clear up any hanging memory
 			torch.cuda.empty_cache()

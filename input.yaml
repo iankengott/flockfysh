@@ -1,2 +1,9 @@
-input_dir: robo
-class_names: ['Bed Bug', 'Fire ant', 'Tick', 'Wasp']
+
+job1: #job1 can be replaced with any name for the job you prefer
+  type: 'train-scrape'
+  input_dir: robo
+  class_names: ['Bed Bug', 'Fire ant', 'Tick', 'Wasp']
+  train-workers: 8
+  imgs-per-label: 500
+  total-maximum-images: 7000
+
