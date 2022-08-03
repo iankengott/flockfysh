@@ -4,7 +4,7 @@ input-dir:
   - mandatory: True
 train-workers:
   - mandatory: True
-imgs-per-label:
+images-per-label:
   - mandatory: True
 total-maximum-images:
   - mandatory: True

@@ -3,7 +3,7 @@ import os
 import yaml 
 from config import  YOLO_DIR
 
-def setup_raw_dataset(input_config_yaml):
+def setup_raw_dataset(**input_config_yaml):
 
 	shutil.copytree(os.path.join(input_config_yaml["input-dir"], 'train'), os.path.join(YOLO_DIR, 'raw_dataset', 'train'))
 	shutil.copytree(os.path.join(input_config_yaml["input-dir"], 'valid'), os.path.join(YOLO_DIR, 'raw_dataset', 'valid'))

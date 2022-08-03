@@ -5,7 +5,7 @@ from .get_params_for_job import get_train_scrape_params, get_annotate_params
 
 def get_jobs_from_yaml_params(yaml_params):
     jobs = []
-    
+
     #Assume all upper level keys are job names
     for key in yaml_params.keys():
         if not 'job-type' in yaml_params[key]:
@@ -16,7 +16,7 @@ def get_jobs_from_yaml_params(yaml_params):
         elif yaml_params[key]['job-type'] == ANNOTATE_JOB:
             jobs.append(get_annotate_params(key, yaml_params[key]))
         else:
-            raise Exception(f'ERROR - The job with jobname {key} has an invalid job-type parameter: {yaml_params[key]['job-type']} (valid ones are {TRAIN_SCRAPE_JOB} or {ANNOTATE_JOB})')
+            raise Exception(f'ERROR - The job with jobname {key} has an invalid job-type parameter: {yaml_params[key]["job-type"]} (valid ones are {TRAIN_SCRAPE_JOB} or {ANNOTATE_JOB})')
     
     return jobs
     

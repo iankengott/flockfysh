@@ -20,19 +20,19 @@ from utilities.optimizers.ram_reducer import reduce_ram_usage
 from scraper.DataLoaders.WebDataLoader import WebDataLoader
 from config import YOLO_DIR, PHOTO_DIRECTORY, PHOTO_DIRNAME
 
-def run_training_object_detection_webscrape_loop(**args)
+def run_training_object_detection_webscrape_loop(**args):
 	
 	#class_names,input_dir,TOTAL_MAXIMUM_IMAGES = 7000, IMAGES_PER_LABEL = 500, MAX_TRAIN_IMAGES = 5000, CONFIDENCE_THRESHOLD = 0.3, SAVE_BB_IMAGE = True, DIM = 200, BATCH = 8, EPOCHS = 50, MAX_TRAINS = 3):
 
 	#TODO: figure out a way to handle params without so much overflow
-	MAX_TRAIN_IMAGES = args['imgs-per-label'] * len(args['class-names'])
+	MAX_TRAIN_IMAGES = args['images-per-label'] * len(args['class-names'])
 
 
 	if platform.system() == 'Windows':
 		reduce_ram_usage(args['reduce-ram-usage'])
 	
 	#Base train on images
-	setup_and_train_yolo(args, args['image-dimension'], args['train-batch'] , 100, args['max-train-images'])
+	setup_and_train_yolo(**args)
 	webdl = WebDataLoader(args['total-maximum-images'], args['images-per-label'], args['max-train-images'], args['class-names'], args['input-dir'], PHOTO_DIRNAME)
 	colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(args["class-names"]))]
 
