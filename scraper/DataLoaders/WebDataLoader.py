@@ -9,7 +9,6 @@ class WebDataLoader:
 	def __init__(self, MAX_IMAGES, IMAGES_PER_LABEL, MAX_TRAIN_IMAGES, labels, queries, dataset_dir, PHOTOS_DIR = 'photos'):
 		self.MAX_IMAGES = MAX_IMAGES
 		self.labels = labels
-		self.queries = queries
 		self.IMAGES_PER_LABEL = IMAGES_PER_LABEL
 		self.MAX_TRAIN_IMAGES = MAX_TRAIN_IMAGES
 		self.PHOTOS_DIR = PHOTOS_DIR
@@ -20,7 +19,7 @@ class WebDataLoader:
 
 		# For the initial version, we will only scrape once, and get as many images as possible. The code has been modularized to scale, though.
 		# uncomment below line in final vers, commented for debugging ease
-		self.download_by_chunk(self.labels, self.queries, ignore_excess = True)
+		self.download_by_chunk(self.labels, queries, ignore_excess = True)
 		self.img_batches , self.label_batches = self.batch_images(self.labels, starting_img_per_batch = 50)
 
 	
@@ -86,25 +85,33 @@ class WebDataLoader:
 
 		# Yahoo
 		for i in range(len(classnames)):
-			if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
-				images_per_query = images_per_scraper // len(queries[classnames[i]])
-				for j in range(len(queries[classnames[i]])):
-					self.download_images_from_yahoo(classnames[i], queries[classnames[i]][j], images_per_query)
-					cur_image_count[i] += images_per_query
+			for query in queries[classnames[i]]:
+				if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
+					print(f'Downloading images for query: {query}')
+					self.download_images_from_yahoo(classnames[i], query, images_per_scraper)
+					cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+				else:
+					break
 		
 		# Google
 		for i in range(len(classnames)):
-			if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
-				for j in range(len(queries[classnames[i]])):
-					self.download_images_from_yahoo(classnames[i], queries[classnames[i]][j], images_per_query)
-					cur_image_count[i] += images_per_query
+			for query in queries[classnames[i]]:
+				if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
+					print(f'Downloading images for query: {query}')
+					self.download_images_from_google(classnames[i], query, images_per_scraper)
+					cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+				else:
+					break
 
 		# Shutterstock
 		for i in range(len(classnames)):
-			if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
-				for j in range(len(queries[classnames[i]])):
-					self.download_images_from_yahoo(classnames[i], queries[classnames[i]][j], images_per_query)
-					cur_image_count[i] += images_per_query
+			for query in queries[classnames[i]]:
+				if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
+					print(f'Downloading images for query: {query}') 
+					self.download_images_from_shutterstock(classnames[i], query, images_per_scraper)
+					cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+				else:
+					break
 
 		if not ignore_excess:
 			print('Excess has been specified to be removed, set ignore_excess to be True if the extra images is wanted')
