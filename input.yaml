@@ -1,5 +1,13 @@
-
-job1: #job1 can be replaced with any name for the job you prefer
+#Note that jobs are run sequentially!
+job1: #Download the dataset we want to train
+  job-type: 'download'
+  api-name: 'roboflow'
+  api-key: 'ENTER_YOUR_API_KEY_HERE'
+  workspace-name: "sanka-madushankaresearch"
+  project-name: "insectbite"
+  project-version: 1
+  output-dirname: 'robo'
+job2: #job1 can be replaced with any name for the job you prefer
   job-type: 'train-scrape'
   input-dir: robo
   class-names: ['Bed Bug', 'Fire ant', 'Tick', 'Wasp']
