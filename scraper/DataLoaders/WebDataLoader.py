@@ -87,20 +87,24 @@ class WebDataLoader:
 		# Yahoo
 		for i in range(len(classnames)):
 			if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
-				self.download_images_from_yahoo(classnames[i], queries[i], images_per_scraper)
-				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+				images_per_query = images_per_scraper // len(queries[classnames[i]])
+				for j in range(len(queries[classnames[i]])):
+					self.download_images_from_yahoo(classnames[i], queries[classnames[i]][j], images_per_query)
+					cur_image_count[i] += images_per_query
 		
 		# Google
 		for i in range(len(classnames)):
 			if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
-				self.download_images_from_google(classnames[i], queries[i], images_per_scraper)
-				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+				for j in range(len(queries[classnames[i]])):
+					self.download_images_from_yahoo(classnames[i], queries[classnames[i]][j], images_per_query)
+					cur_image_count[i] += images_per_query
 
 		# Shutterstock
 		for i in range(len(classnames)):
 			if cur_image_count[i] < (self.IMAGES_PER_LABEL * excess_factor):
-				self.download_images_from_shutterstock(classnames[i], queries[i], images_per_scraper)
-				cur_image_count[i] = len(os.listdir(os.path.abspath(os.path.join('scraper', self.OUTPUT_DIR, classnames[i]))))
+				for j in range(len(queries[classnames[i]])):
+					self.download_images_from_yahoo(classnames[i], queries[classnames[i]][j], images_per_query)
+					cur_image_count[i] += images_per_query
 
 		if not ignore_excess:
 			print('Excess has been specified to be removed, set ignore_excess to be True if the extra images is wanted')
