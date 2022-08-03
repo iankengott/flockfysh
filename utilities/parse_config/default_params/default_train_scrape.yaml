@@ -8,6 +8,8 @@ images-per-label:
   - mandatory: True
 total-maximum-images:
   - mandatory: True
+class-search-queries:
+  - mandatory: True
 
 #TODO: need to add classname-searches params to specifically let user specify specific queries
 

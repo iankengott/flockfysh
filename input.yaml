@@ -3,6 +3,7 @@ job1: #job1 can be replaced with any name for the job you prefer
   job-type: 'train-scrape'
   input-dir: robo
   class-names: ['Bed Bug', 'Fire ant', 'Tick', 'Wasp']
+  class-search-queries: {'Bed Bug' : ['bed bug bites'], 'Fire ant' : ['fire ant bites'], 'Tick' : ['tick bites'], 'Wasp' : ['wasp bites']}
   train-workers: 8
   images-per-label: 500
   total-maximum-images: 7000
