@@ -1,4 +1,4 @@
-# flockfysh: The data vending machine that gives more than it gets. 
+# Flockfysh: the data vending machine that gives more than it gets. 
 flockfysh is an open source, efficient 2D-image tool that combines web scraping with artificial intelligence to generate and curate top quality image / object detection datasets. Feed flockfysh a "mini-dataset" with only ~50 images for each label (in the train category), and get back a hundredfold! 
 
 We support your favorite tools such as [Roboflow](https://universe.roboflow.com/)!
