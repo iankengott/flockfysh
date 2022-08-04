@@ -1,5 +1,6 @@
 from scraper import * 
 from utilities import *
+from . import run
 from . import config 
 import sys
 
