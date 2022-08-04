@@ -125,8 +125,27 @@ job1: #job1 can be replaced with any name for the job you prefer
 
 3. Run `python run.py input.yaml` to run the workflow!
 
+## More about the various flockfysh "jobs" 
+You must specify which type of job you want for each using a `job-type` attribute. Here are the different job types available.
+
+### download
+Automatically downloads a dataset from a specific API. The current APIs supported are listed below:
+- Roboflow
+
+Note that each API also has API-specific information (API keys, secrets, etc) that flockfysh needs to utilize to download the dataset.
+
+### train-scrape
+Utilizes object detection models in tandem with web-scraping to generate an image-dataset. Here are some relevant properties:
+
+- `input-dir`: The path to the dataset folder 
+- `class-names`: An array of labels for the images you are trying to classify 
+- `class-search-queries`: An array of words you'd put in a search (imagine Googling the images yourself) to download the images.
+- `train-workers`: Number of workers for training
+- `images-per-label`: MAIN PROPERTY TO control dataset size - how many images you want for each of the class names specified in `class-names`
+- `total-maximum-images`: Adds an upper limit on the number of images (most support is for `images-per-label` at the moment)
+
 ## Development / Open Source
-We are extremely excited to open this repository to the community, and can't wait to see the future to which this project heads. Please consider joining our Discord server, which we use as our main platform to communicate, improve, and resolve issues.
+We are extremely excited to open this repository to the community, and can't wait to see the future to which this project heads! Please consider joining our Discord server, which we use as our main platform to communicate, improve, and resolve issues.
 
 Steps to begin development: 
 1. Clone our repository by running the command `git clone https://github.com/teamnebulaco/flockfysh.git`
