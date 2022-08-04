@@ -29,11 +29,13 @@ dataset/
 
 We choose this format because we find that this dataset format is the most consistent with the majority of Machine Learning (ML) & Computer Vision (CV) workflows, as well as *a structure that supports model training and testing right away*.
 
+*Note that the dataset labels should be in yolo / yolov5 format!!*
+
 ### flockfysh Input Format (`input.yaml`) 
 In order to run, flockfysh requires a small amount of guidance from the user to help some information. More specifically, it needs:
 
 1. The names of your classes for your dataset
-2. The input directory name of your dataset folder (in the format above)
+2. The input directory name of your dataset folder (in the format [above](#flockfysh-dataset-format))
 3. A Python dictionary mapping each class name to a list of search queries that would get you the images you want 
 
 We can effectively provide this information to flockfysh by using an input YAML file. Additionally, there are customizable settings (such as training parameters and auxiliary options such as saving the bounding boxes for each image) that you can also toggle in this YAML format.
@@ -51,7 +53,7 @@ jobn:
     ...
 ```
 
-Each task ("train-scrape" is an example of a task or feature that flockfysh can perform) is treated as a seperate job that flockfysh can do. flockfysh supports multiple job operations, and performs each one in a sequential manner (i.e, does `job1`, then `job2`, etc). The identifier for each job (ex: `job1`) can be changed to whatever the user wants, and when running, flockfysh will notify the user via Terminal when it starts a job.
+Each task ("train-scrape" is an example of a task or feature that flockfysh can perform) is treated as a seperate job that flockfysh can do. flockfysh supports multiple job operations, and performs each one in a sequential manner (i.e, does `job1`, then `job2`, etc). The identifier for each job (ex: `job1`) can be changed to whatever the user wants, and when running, flockfysh will notify the user via Terminal when it starts a job. For more information on the different kinds of jobs, [see the link below](#more-about-the-various-flockfysh-jobs)
 
 For each job in YAML, there are a set of *mandatory* settings to include (take a look at the 3 settings above, for example). The job will **not** be able to be completed (and an error will be thrown) if those mandatory settings aren't included. There are also other *default, configurable parameters settings* for each job that are adopted if they aren't specified. Specifying them in the YAML for that job will override the defaults (for that job only).
 
@@ -64,9 +66,10 @@ Make sure to check that you have everything specified in [link](#What-you-need).
 Running flockfysh using the Github repo (latest code): 
 1. Clone our repository by running the command `git clone https://github.com/teamnebulaco/flockfysh.git`
 2. Run `cd flockfysh` to enter the repo and `pip install -r requirements.txt` to install the dependencies.
-3. Export YoloV5 dataset (in format specified above) into a folder inside the repository. If your dataset is on Roboflow, you have the option of exporting it and moving into the directory, or adding a download job at the beginning of the YAML to automatically load it in for you. Don't have a dataset? Check out our [sample Roboflow dataset](https://github.com/teamnebulaco/sample-flockfysh-robo)
-4. Create an `input.yaml` file (take a look at the sample `input.yaml` format)
-5. Run `python run.py input.yaml` to run flockfysh with the specified input file `input.yaml`
+3. Export YoloV5 dataset (in format specified [above](#flockfysh-dataset-format)) into a folder inside the repository. If your dataset is on Roboflow, you have the option of exporting it and moving into the directory, or adding a download job at the beginning of the YAML to automatically load it in for you.
+    - Don't have a dataset? Check out our [sample Roboflow dataset](https://github.com/teamnebulaco/sample-flockfysh-robo)
+5. Create an `input.yaml` file (take a look at the sample `input.yaml` format)
+6. Run `python run.py input.yaml` to run flockfysh with the specified input file `input.yaml`
 
 ## Sample Workflows
 
@@ -103,7 +106,7 @@ job2: #job1 can be replaced with any name for the job you prefer
 3. Run `python run.py input.yaml` to run the workflow!
 
 ### Using a custom dataset to run a Train-Scrape Job
-For the purposes of this sample, we will use a [publicly available dataset](https://universe.roboflow.com/sanka-madushankaresearch/insectbite) within the Roboflow universe, but locally download it. The dataset should be in the format specified above.
+For the purposes of this sample, we will use a [publicly available dataset](https://universe.roboflow.com/sanka-madushankaresearch/insectbite) within the Roboflow universe, but locally download it. The dataset should be in the format specified [above](#flockfysh-dataset-format).
 
 
 1. After cloning flockfysh and getting set up, run `git clone https://github.com/teamnebulaco/sample-flockfysh-robo.git` and move the `robo` folder inside into the base directory
@@ -125,7 +128,7 @@ job1: #job1 can be replaced with any name for the job you prefer
 
 3. Run `python run.py input.yaml` to run the workflow!
 
-## More about the various flockfysh "jobs" 
+## More about the various flockfysh jobs 
 You must specify which type of job you want for each using a `job-type` attribute. Here are the different job types available.
 
 ### download
