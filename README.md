@@ -1,5 +1,5 @@
 # flockfysh: The data vending machine that gives more than it gets. 
-flockfysh is an Open source, Efficient 2D-image tool that combines Web Scraping and AI to generate and curate top quality image / object detection datasets. Give it a little whiff of the data you want by providing a "mini-dataset" with only ~50 images for each label (in the train category), and get back tenfold! For object detection, we support your favorite tools such as [Roboflow](https://universe.roboflow.com/)
+flockfysh is an open source, efficient 2D-image tool that combines web Scraping and AI to generate and curate top quality image / object detection datasets. Give it a little whiff of the data you want by providing a "mini-dataset" with only ~50 images for each label (in the train category), and get back tenfold! For object detection, we support your favorite tools such as [Roboflow](https://universe.roboflow.com/)
 
 We currently looking for open source contributors, and would love to work with you to further develop this promising tool!
 
