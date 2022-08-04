@@ -156,4 +156,4 @@ Steps to begin development:
 4. Run `python3 run.py input.yaml` to start developing! Happy coding!
 
 ## License
-This repository is licensed under the BSD-4 license. **Note that some of the images from the scraper may have artisitic copyrights, and should only, only, ONLY be used for ML & Training purposes. Under no grounds should this tool be exploited to circumvent copyrights.** Besides, it makes everyone's lives easier if we don't mooch off each other's copyrighted images. :))
+This repository is licensed under the [BSD-4 license](LICENSE.md). **Note that some of the images from the scraper may have artisitic copyrights, and should only, only, ONLY be used for ML & Training purposes. Under no grounds should this tool be exploited to circumvent copyrights.** Besides, it makes everyone's lives easier if we don't mooch off each other's copyrighted images. :))
