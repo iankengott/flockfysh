@@ -1,6 +1,8 @@
 # flockfysh
 The vending machine that gives more than it gets. Give it a little whiff of the data you want by providing a "mini-dataset" with only ~50 images for each label (in the train category), and get back tenfold! For object detection, we support your favorite tools such as [Roboflow](https://universe.roboflow.com/)
 
+We currently looking for open source contributors, and would love to work with you to further develop this promising tool!
+
 ## How flockfysh works in a nutshell
 We power up traditional object detection and classic imaging techniques such as data augmentations with data gathering techniques like lightning-fast web-scraping. The higher level algorithm (for most of our supported features is the same) functions as described below:
 
