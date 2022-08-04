@@ -1,9 +1,20 @@
-
-job1: #job1 can be replaced with any name for the job you prefer
-  type: 'train-scrape'
-  input_dir: robo
-  class_names: ['Bed Bug', 'Fire ant', 'Tick', 'Wasp']
+#Note that jobs are run sequentially!
+job1: #Download the dataset we want to train
+  job-type: 'download'
+  api-name: 'roboflow'
+  api-key: 'ENTER_YOUR_API_KEY_HERE'
+  workspace-name: "sanka-madushankaresearch"
+  project-name: "insectbite"
+  project-version: 1
+  output-dirname: 'robo'
+job2: #job1 can be replaced with any name for the job you prefer
+  job-type: 'train-scrape'
+  input-dir: robo
+  class-names: ['Bed Bug', 'Fire ant', 'Tick', 'Wasp']
+  class-search-queries: {'Bed Bug' : ['bed bug bites'], 'Fire ant' : ['fire ant bites'], 'Tick' : ['tick bites'], 'Wasp' : ['wasp bites']}
   train-workers: 8
-  imgs-per-label: 500
+  images-per-label: 500
   total-maximum-images: 7000
+  image-dimensions: 200
+  train-batch: 8
 

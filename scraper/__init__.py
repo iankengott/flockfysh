@@ -1,5 +1,4 @@
 import scraper.augmentations as augmentations
-import scraper.bing_images as bing_images
 import scraper.DataLoaders as DataLoaders
 import scraper.google_images as google_images
 import scraper.shutterstock_images as shutterstock_images

@@ -4,9 +4,11 @@ input-dir:
   - mandatory: True
 train-workers:
   - mandatory: True
-imgs-per-label:
+images-per-label:
   - mandatory: True
 total-maximum-images:
+  - mandatory: True
+class-search-queries:
   - mandatory: True
 
 #TODO: need to add classname-searches params to specifically let user specify specific queries
@@ -20,6 +22,7 @@ min-conf-threshold: 0.4
 max-trains: 3
 save-bb-image: False
 reduce-ram-usage: False
+output-dataset-folder-name: 'finalized-dataset'
 
 
 #Not very useful (overridden by imgs-per-label), considering integrating 

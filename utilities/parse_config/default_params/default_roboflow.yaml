@@ -1,0 +1,12 @@
+api-name: 
+  - mandatory: True
+api-key: 
+  - mandatory: True
+workspace-name: 
+  - mandatory: True
+project-name:
+  - mandatory: True
+project-version: 
+  - mandatory: True
+output-dirname: 
+  - mandatory: True
