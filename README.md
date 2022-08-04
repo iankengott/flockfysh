@@ -57,16 +57,77 @@ For each job in YAML, there are a set of *mandatory* settings to include (take a
 
 If you'd like to take a look at the default options / confing for a specific job, check out the [default settings folder].(https://github.com/teamnebulaco/flockfysh/tree/main/utilities/parse_config/default_params)
 
-## How to run Flockfysh
-NOTE that the instructions below are subject to change, this is a rapidly developing tool
 
-Steps to Run: 
+## A Quick Dive into running flockfysh
+Make sure to check that you have everything specified in [link](#What-you-need). For most dataset generations, one can easily adapt a sample YAML workflow instead of needing to write one from scratch. 
+
+Running flockfysh using the Github repo (latest code): 
 1. Clone our repository by running the command `git clone https://github.com/teamnebulaco/flockfysh.git`
-2. Export Roboflow dataset into Yolov5 format into a folder inside the repository. Don't have a dataset? Check out our [sample dataset](https://github.com/teamnebulaco/sample-flockfysh-robo)
-3. Create an `input.yaml` file (take a look at the sample `input.yaml` format)
-3. Run `python3 run.py input.yaml` to run
+2. Run `cd flockfysh` to enter the repo and `pip install -r requirements.txt` to install the dependencies.
+3. Export YoloV5 dataset (in format specified above) into a folder inside the repository. If your dataset is on Roboflow, you have the option of exporting it and moving into the directory, or adding a download job at the beginning of the YAML to automatically load it in for you. Don't have a dataset? Check out our [sample Roboflow dataset](https://github.com/teamnebulaco/sample-flockfysh-robo)
+4. Create an `input.yaml` file (take a look at the sample `input.yaml` format)
+5. Run `python run.py input.yaml` to run flockfysh with the specified input file `input.yaml`
 
-## Development
+## Sample Workflows
+
+### Auto-Downloading a Roboflow Dataset and Running a Train-Scrape Job
+For the purposes of this sample, we will use a [publicly available dataset](https://universe.roboflow.com/sanka-madushankaresearch/insectbite) within the Roboflow universe.
+
+The sample YAML file for this workflow is the same as the example `input.yaml`. 
+
+1. After cloning the repo and getting set up, add this into a `input.yaml` file at the base directory (same directory as `run.py`)
+
+```
+job1: #Download the dataset we want to train
+  job-type: 'download'
+  api-name: 'roboflow'
+  api-key: 'ENTER_YOUR_API_KEY_HERE'
+  workspace-name: "sanka-madushankaresearch"
+  project-name: "insectbite"
+  project-version: 1
+  output-dirname: 'robo'
+job2: #job1 can be replaced with any name for the job you prefer
+  job-type: 'train-scrape'
+  input-dir: robo
+  class-names: ['Bed Bug', 'Fire ant', 'Tick', 'Wasp']
+  class-search-queries: {'Bed Bug' : ['bed bug bites'], 'Fire ant' : ['fire ant bites'], 'Tick' : ['tick bites'], 'Wasp' : ['wasp bites']}
+  train-workers: 8
+  images-per-label: 500
+  total-maximum-images: 7000
+  image-dimensions: 200
+  train-batch: 8
+
+```
+
+2. Replace `api-key` with the API key you get from Roboflow (can easily be found when exporting a dataset using code).
+3. Run `python run.py input.yaml` to run the workflow!
+
+### Using a custom dataset to run a Train-Scrape Job
+For the purposes of this sample, we will use a [publicly available dataset](https://universe.roboflow.com/sanka-madushankaresearch/insectbite) within the Roboflow universe, but locally download it. The dataset should be in the format specified above.
+
+
+1. After cloning flockfysh and getting set up, run `git clone https://github.com/teamnebulaco/sample-flockfysh-robo.git` and move the `robo` folder inside into the base directory
+2. Add the code below into a `input.yaml` file at the base directory (same directory as `run.py`)
+
+```
+job1: #job1 can be replaced with any name for the job you prefer
+  job-type: 'train-scrape'
+  input-dir: robo
+  class-names: ['Bed Bug', 'Fire ant', 'Tick', 'Wasp']
+  class-search-queries: {'Bed Bug' : ['bed bug bites'], 'Fire ant' : ['fire ant bites'], 'Tick' : ['tick bites'], 'Wasp' : ['wasp bites']}
+  train-workers: 8
+  images-per-label: 500
+  total-maximum-images: 7000
+  image-dimensions: 200
+  train-batch: 8
+
+```
+
+3. Run `python run.py input.yaml` to run the workflow!
+
+## Development / Open Source
+We are extremely excited to open this repository to the community, and can't wait to see the future to which this project heads. Please consider joining our Discord server, which we use as our main platform to communicate, improve, and resolve issues.
+
 Steps to begin development: 
 1. Clone our repository by running the command `git clone https://github.com/teamnebulaco/flockfysh.git`
 2. Switch into our current dev_branch by running `git checkout -b dev-branch`
@@ -75,3 +136,5 @@ Steps to begin development:
     1. Note that the code above assumes **you have the virtualenv package installed** If not, run the command `pip install --upgrade virtualenv`
 4. Run `python3 run.py input.yaml` to start developing! Happy coding!
 
+## License
+This repository is licensed under the BSD-4 license. **Note that some of the images from the scraper may have artisitic copyrights, and should only, only, ONLY be used for ML & Training purposes. Under no grounds should this tool be exploited to circumvent copyrights.** Besides, it makes everyone's lives easier if we don't mooch off each other's copyrighted images. :))
