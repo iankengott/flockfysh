@@ -1,6 +1,6 @@
 BSD 4-Clause License
 
-Copyright (c) [year], [fullname]
+Copyright (c) 2022, Team Nebula
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
