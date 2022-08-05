@@ -26,10 +26,6 @@ def run_training_object_detection_webscrape_loop(**args):
 
 	#TODO: figure out a way to handle params without so much overflow
 	MAX_TRAIN_IMAGES = args['images-per-label'] * len(args['class-names'])
-<<<<<<< HEAD
-
-=======
->>>>>>> 46cfcc6169c25786cc741bcefec7b2f236eae096
 
 	if platform.system() == 'Windows':
 		try:
