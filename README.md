@@ -6,7 +6,7 @@ We support your favorite tools such as [Roboflow](https://universe.roboflow.com/
 We are currently looking for open source contributors, and would love to work with you to further develop this promising tool!
 
 ## Installation Recommendation
-Currently, the dependencies appear are clearly supported on Python 3.8 (the `requirements.txt` file was generated using a Python 3.8 virtual env). That would mean that it would likely work in other versions, but you may have to sort through the dependencies (a bunch of `pip install`s and lookups for the appropriate version)
+Currently, the dependencies appear are **clearly supported on Python 3.8** (the `requirements.txt` file was generated using a Python 3.8 virtual env). That would mean that it would likely work in other versions, but you may have to sort through the dependencies (a bunch of `pip install`s and lookups for the appropriate version)
 
 ## How flockfysh works in a nutshell
 We power up traditional object detection and classic imaging techniques such as data augmentations with data gathering techniques like lightning-fast web-scraping. The higher level algorithm (for most of our supported features is the same) functions is as described below:
